@@ -46,12 +46,33 @@ foreach ($bucket in $r2Config.buckets) {
         continue
     }
 
-    if (-not $env:CLOUDFLARE_API_TOKEN -and -not $env:CF_API_TOKEN) {
+    $apiToken = if ($env:CLOUDFLARE_API_TOKEN) { $env:CLOUDFLARE_API_TOKEN } elseif ($env:CF_API_TOKEN) { $env:CF_API_TOKEN } else { $null }
+    $accountId = if ($env:CLOUDFLARE_ACCOUNT_ID) { $env:CLOUDFLARE_ACCOUNT_ID } elseif ($env:CF_ACCOUNT_ID) { $env:CF_ACCOUNT_ID } else { $null }
+
+    if (-not $apiToken) {
         throw "CLOUDFLARE_API_TOKEN/CF_API_TOKEN not set. Add it to .env or environment."
     }
+    if (-not $accountId) {
+        throw "CLOUDFLARE_ACCOUNT_ID/CF_ACCOUNT_ID not set. Add it to .env or environment."
+    }
 
-    Write-Host "  Creating R2 bucket via Wrangler..." -ForegroundColor Cyan
-    $output = & npx wrangler r2 bucket create $bucket.name 2>&1 | Out-String
+    $originalApiToken = $env:CLOUDFLARE_API_TOKEN
+    $originalAccountId = $env:CLOUDFLARE_ACCOUNT_ID
+    $hadApiToken = Test-Path Env:CLOUDFLARE_API_TOKEN
+    $hadAccountId = Test-Path Env:CLOUDFLARE_ACCOUNT_ID
+
+    try {
+        $env:CLOUDFLARE_API_TOKEN = $apiToken
+        $env:CLOUDFLARE_ACCOUNT_ID = $accountId
+
+        Write-Host "  Creating R2 bucket via Wrangler..." -ForegroundColor Cyan
+        $output = & npx wrangler r2 bucket create $bucket.name 2>&1 | Out-String
+    }
+    finally {
+        if ($hadApiToken) { $env:CLOUDFLARE_API_TOKEN = $originalApiToken } else { Remove-Item Env:CLOUDFLARE_API_TOKEN -ErrorAction SilentlyContinue }
+        if ($hadAccountId) { $env:CLOUDFLARE_ACCOUNT_ID = $originalAccountId } else { Remove-Item Env:CLOUDFLARE_ACCOUNT_ID -ErrorAction SilentlyContinue }
+    }
+
     Write-Host $output.TrimEnd()
 
     if ($output -match '([0-9a-f]{32,})') {

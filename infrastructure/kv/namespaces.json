@@ -5,6 +5,7 @@
     {
       "binding": "SESSION_STORE",
       "name": "cloudflare-manager-session-store",
+      "id": "c8013eb8e41440719e0b41e2a7ab2f67",
       "worker": "plot-generator-site-auth",
       "purpose": "Stores session data for site-auth worker"
     }
