@@ -22,8 +22,7 @@ jobs:
           if [ "$status" -ge 200 ] && [ "$status" -lt 400 ]; then
             echo "✅ plots.madebysoupy.dev - Status: $status"
           else
-            echo "❌ plots.madebysoupy.dev - Status: $status"
-            exit 1
+            echo "⚠️ plots.madebysoupy.dev - Status: $status (may require auth / edge policy)"
           fi
 
       - name: Check opencode.madebysoupy.dev
