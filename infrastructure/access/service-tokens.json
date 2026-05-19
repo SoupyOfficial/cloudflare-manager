@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Service token metadata. Actual secrets stored in GitHub Actions or OS keychain.",
+  "tokens": [
+    {
+      "name": "plot-gen",
+      "purpose": "Allows plot-generator server to call LLM API without user login",
+      "applications": ["LLM API"],
+      "secret_refs": {
+        "client_id": "secrets/service-token-plot-gen-id",
+        "client_secret": "secrets/service-token-plot-gen-secret"
+      },
+      "notes": "Used in plot-generator env: VITE_LLM_PROXY_CLIENT_ID, VITE_LLM_PROXY_CLIENT_SECRET"
+    }
+  ]
+}

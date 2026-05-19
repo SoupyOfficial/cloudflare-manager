@@ -1,0 +1,5 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "R2 bucket definitions. Create with: wrangler r2 bucket create <name>",
+  "buckets": []
+}

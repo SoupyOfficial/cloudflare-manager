@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Access applications and policies. Sync with: npm run sync:access",
+  "applications": [
+    {
+      "name": "LLM API",
+      "domain": "llm.madebysoupy.dev",
+      "type": "self_hosted",
+      "session_duration": "24h",
+      "policies": [
+        {
+          "name": "Allow authenticated users",
+          "action": "allow",
+          "include": [
+            {
+              "type": "email",
+              "emails": ["jcampbell@example.com"]
+            },
+            {
+              "type": "service_token",
+              "service_token_ref": "plot-gen"
+            }
+          ]
+        }
+      ],
+      "service_auth": true,
+      "notes": "Protects Ollama API. Service token used by plot-generator for server-side calls."
+    },
+    {
+      "name": "OpenCode IDE",
+      "domain": "opencode.madebysoupy.dev",
+      "type": "self_hosted",
+      "session_duration": "12h",
+      "policies": [],
+      "worker_protection": "plot-generator-site-auth",
+      "notes": "Protected by custom Worker auth (site-auth), NOT by Access email challenge. Remove any Access policies for this hostname."
+    }
+  ]
+}

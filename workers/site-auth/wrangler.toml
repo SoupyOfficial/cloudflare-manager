@@ -1,0 +1,30 @@
+name = "plot-generator-site-auth"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+account_id = "b6ccd531a511f0021fa8d90c29cd5a3e"
+
+# ─── Routes ───────────────────────────────────────────────────────────────────
+[[routes]]
+pattern = "plots.madebysoupy.dev/*"
+zone_name = "madebysoupy.dev"
+
+[[routes]]
+pattern = "apps.madebysoupy.dev/plot_generator"
+zone_name = "madebysoupy.dev"
+
+[[routes]]
+pattern = "apps.madebysoupy.dev/plot_generator/*"
+zone_name = "madebysoupy.dev"
+
+[[routes]]
+pattern = "opencode.madebysoupy.dev/*"
+zone_name = "madebysoupy.dev"
+
+# ─── Secrets (set via `wrangler secret put`, do NOT commit values) ────────────
+# BASIC_AUTH_USERNAME
+# BASIC_AUTH_PASSWORD
+# OPENCODE_UPSTREAM_URL (recommended: https://opencode-origin.madebysoupy.dev/)
+#
+# Optional:
+# LOGIN_URL (default: https://plots.madebysoupy.dev/)
+# UPSTREAM_URL (default: https://soupyofficial.github.io/plot_generator/)

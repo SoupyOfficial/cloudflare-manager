@@ -1,0 +1,66 @@
+name: Sync Infrastructure
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'infrastructure/**'
+      - '.github/workflows/sync-infra.yml'
+  workflow_dispatch:
+    inputs:
+      resource:
+        description: 'Resource to sync'
+        required: false
+        type: choice
+        options:
+          - all
+          - dns
+          - access
+          - firewall
+
+jobs:
+  sync-dns:
+    name: Sync DNS
+    if: ${{ github.event.inputs.resource == 'all' || github.event.inputs.resource == 'dns' || github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sync DNS records
+        run: |
+          echo "Syncing DNS records from infrastructure/dns/records.json..."
+          # Parse and apply DNS records via Cloudflare API
+          node scripts/sync-dns.mjs
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
+
+  sync-access:
+    name: Sync Access Policies
+    if: ${{ github.event.inputs.resource == 'all' || github.event.inputs.resource == 'access' || github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Sync Access applications
+        run: |
+          echo "Syncing Access applications from infrastructure/access/..."
+          node scripts/sync-access.mjs
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}

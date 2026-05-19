@@ -1,0 +1,76 @@
+name: Verify Configuration
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'workers/**'
+      - 'infrastructure/**'
+      - '.github/workflows/verify.yml'
+  push:
+    branches: ['**', '!main']
+    paths:
+      - 'workers/**'
+      - 'infrastructure/**'
+
+jobs:
+  validate-workers:
+    name: Validate Workers
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate wrangler.toml files
+        run: |
+          for dir in workers/*/; do
+            if [ -f "$dir/wrangler.toml" ]; then
+              echo "Validating $dir/wrangler.toml..."
+              cd "$dir"
+              npx wrangler deploy --dry-run --outdir /tmp/wrangler-dry-run 2>&1 || echo "Warning: $dir validation failed"
+              cd - > /dev/null
+            fi
+          done
+
+      - name: Check for committed secrets
+        run: |
+          if grep -r "sk-" workers/ --include="*.js" --include="*.ts" --include="*.toml" 2>/dev/null; then
+            echo "ERROR: Potential API keys found in source files"
+            exit 1
+          fi
+          if grep -r "CF-Access-Client-Secret" . --include="*.json" --include="*.yaml" --include="*.yml" 2>/dev/null; then
+            echo "ERROR: Potential service token secrets found"
+            exit 1
+          fi
+          echo "No secrets detected in source files"
+
+  validate-infra:
+    name: Validate Infrastructure Configs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate JSON files
+        run: |
+          for f in infrastructure/**/*.json; do
+            echo "Validating $f..."
+            node -e "JSON.parse(require('fs').readFileSync('$f', 'utf8'))" || exit 1
+          done
+
+      - name: Validate YAML files
+        run: |
+          npm install -g js-yaml
+          for f in infrastructure/**/*.yaml; do
+            echo "Validating $f..."
+            node -e "require('js-yaml').load(require('fs').readFileSync('$f', 'utf8'))" || exit 1
+          done

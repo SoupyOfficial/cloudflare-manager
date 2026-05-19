@@ -1,0 +1,29 @@
+{
+  "name": "cloudflare-manager",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Central Cloudflare infrastructure management — Workers, DNS, Tunnels, Access, KV, R2, D1",
+  "scripts": {
+    "deploy:all": "wrangler deploy --env production",
+    "deploy:site-auth": "cd workers/site-auth && wrangler deploy",
+    "deploy:llm-proxy": "cd workers/llm-proxy && wrangler deploy",
+    "deploy:telemetry": "cd workers/telemetry && wrangler deploy",
+    "dev:site-auth": "cd workers/site-auth && wrangler dev",
+    "dev:llm-proxy": "cd workers/llm-proxy && wrangler dev",
+    "dev:telemetry": "cd workers/telemetry && wrangler dev",
+    "sync:dns": "pwsh scripts/sync-dns.ps1",
+    "sync:access": "pwsh scripts/sync-access.ps1",
+    "sync:tunnels": "pwsh scripts/sync-tunnels.ps1",
+    "verify:all": "pwsh scripts/verify-all.ps1",
+    "health": "pwsh scripts/health-check.ps1",
+    "secret:put": "pwsh scripts/secret-put.ps1",
+    "secret:list": "pwsh scripts/secret-list.ps1"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0",
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

@@ -1,0 +1,27 @@
+# Root Wrangler Configuration
+# This file defines account-level settings shared across all workers.
+# Individual workers have their own wrangler.toml that inherit from this.
+
+name = "cloudflare-manager"
+compatibility_date = "2025-01-01"
+account_id = "b6ccd531a511f0021fa8d90c29cd5a3e"
+
+# Shared environment variables (non-secret)
+[vars]
+ENVIRONMENT = "production"
+
+# KV Namespaces (defined here, referenced in workers)
+# [[kv_namespaces]]
+# binding = "MY_KV"
+# id = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# R2 Buckets
+# [[r2_buckets]]
+# binding = "MY_BUCKET"
+# bucket_name = "my-bucket"
+
+# D1 Databases
+# [[d1_databases]]
+# binding = "MY_DB"
+# database_name = "my-db"
+# database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"

@@ -1,0 +1,38 @@
+# Tunnel: ollama-home
+# Purpose: Exposes local Ollama and OpenCode services
+# Machines: Windows PC (primary), Mac Mini (secondary)
+
+tunnel:
+  name: ollama-home
+  id: ""  # Set via: cloudflared tunnel info ollama-home
+  credentials_file_ref: "secrets/ollama-home-creds.json"  # Reference, not actual file
+
+ingress:
+  - hostname: llm.madebysoupy.dev
+    service: http://localhost:11434
+    machine: windows-pc  # or mac-mini
+    origin_request:
+      connectTimeout: 30s
+      tlsTimeout: 30s
+      tcpKeepAlive: 30s
+      keepAliveTimeout: 90s
+      httpHostHeader: localhost:11434
+    access_policy: cloudflare-access
+
+  - hostname: opencode-origin.madebysoupy.dev
+    service: http://localhost:4096
+    machine: windows-pc
+    origin_request:
+      connectTimeout: 30s
+      tlsTimeout: 30s
+      tcpKeepAlive: 30s
+      keepAliveTimeout: 90s
+      httpHostHeader: localhost:4096
+    access_policy: service-auth-only
+
+  - service: http_status:404
+
+notes:
+  - "Only one machine should run this tunnel at a time for shared hostnames"
+  - "Use stop-tunnel before switching machines"
+  - "OpenCode public hostname (opencode.madebysoupy.dev) is protected by site-auth worker, not this tunnel"

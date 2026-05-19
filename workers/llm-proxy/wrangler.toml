@@ -1,0 +1,15 @@
+name = "llm-api"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+account_id = "b6ccd531a511f0021fa8d90c29cd5a3e"
+workers_dev = true
+
+# ─── Environment Variables ────────────────────────────────────────────────────
+[vars]
+ALLOWED_ORIGINS = "https://apps.madebysoupy.dev,https://plot-generator.madebysoupy.dev"
+
+# ─── Secrets (set via `wrangler secret put`, do NOT commit values) ────────────
+# LLM_HOST_CLIENT_ID
+# LLM_HOST_CLIENT_SECRET
+# OPENAI_API_KEY
+# CLAUDE_API_KEY

@@ -1,0 +1,14 @@
+name = "plot-generator-telemetry"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+account_id = "b6ccd531a511f0021fa8d90c29cd5a3e"
+
+# ─── Routes ───────────────────────────────────────────────────────────────────
+[[routes]]
+pattern = "telemetry.madebysoupy.dev/events"
+zone_name = "madebysoupy.dev"
+
+# ─── Secrets (set via `wrangler secret put`, do NOT commit values) ────────────
+# TURSO_URL
+# TURSO_AUTH_TOKEN
+# TELEMETRY_TOKEN (optional — leave unset to accept unauthenticated requests)

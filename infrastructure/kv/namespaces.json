@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "KV namespace definitions. Create with: wrangler kv:namespace create <name>",
+  "namespaces": [
+    {
+      "binding": "SESSION_STORE",
+      "name": "cloudflare-manager-session-store",
+      "worker": "plot-generator-site-auth",
+      "purpose": "Stores session data for site-auth worker"
+    }
+  ]
+}

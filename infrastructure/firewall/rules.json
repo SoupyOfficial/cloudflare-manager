@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Firewall rules for madebysoupy.dev zone.",
+  "rules": [
+    {
+      "name": "Block known bad bots",
+      "expression": "cf.client.bot contains \"badbot\" or http.user_agent contains \"scanner\"",
+      "action": "block",
+      "enabled": true,
+      "priority": 1
+    },
+    {
+      "name": "Rate limit API endpoints",
+      "expression": "http.request.uri.path contains \"/api/\"",
+      "action": "managed_challenge",
+      "enabled": false,
+      "priority": 2,
+      "notes": "Disabled by default — enable if abuse detected"
+    }
+  ]
+}

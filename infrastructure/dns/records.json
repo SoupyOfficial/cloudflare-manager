@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "DNS records for madebysoupy.dev zone. Sync with: npm run sync:dns",
+  "zone": "madebysoupy.dev",
+  "records": [
+    {
+      "name": "plots",
+      "type": "CNAME",
+      "content": "soupyofficial.github.io",
+      "proxied": true,
+      "comment": "Plot Generator static site (GitHub Pages)"
+    },
+    {
+      "name": "apps",
+      "type": "CNAME",
+      "content": "soupyofficial.github.io",
+      "proxied": true,
+      "comment": "Plot Generator app (GitHub Pages), protected by site-auth worker"
+    },
+    {
+      "name": "opencode",
+      "type": "CNAME",
+      "content": "<tunnel-hostname>",
+      "proxied": true,
+      "comment": "OpenCode IDE, protected by site-auth worker. Origin: opencode-origin.madebysoupy.dev"
+    },
+    {
+      "name": "opencode-origin",
+      "type": "CNAME",
+      "content": "<tunnel-id>.cfargotunnel.com",
+      "proxied": false,
+      "comment": "Cloudflare Tunnel origin for OpenCode (internal, not directly accessible)"
+    },
+    {
+      "name": "llm",
+      "type": "CNAME",
+      "content": "<tunnel-id>.cfargotunnel.com",
+      "proxied": true,
+      "comment": "Ollama LLM API via Cloudflare Tunnel, protected by Access"
+    },
+    {
+      "name": "telemetry",
+      "type": "CNAME",
+      "content": "plot-generator-telemetry.<account>.workers.dev",
+      "proxied": true,
+      "comment": "Telemetry worker endpoint"
+    },
+    {
+      "name": "@",
+      "type": "A",
+      "content": "192.0.2.1",
+      "proxied": true,
+      "comment": "Root domain placeholder — update when ready"
+    }
+  ]
+}

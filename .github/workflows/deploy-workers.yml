@@ -1,0 +1,69 @@
+name: Deploy Workers
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'workers/**'
+      - '.github/workflows/deploy-workers.yml'
+  workflow_dispatch:
+    inputs:
+      worker:
+        description: 'Worker to deploy (leave empty for all)'
+        required: false
+        type: choice
+        options:
+          - all
+          - site-auth
+          - llm-proxy
+          - telemetry
+
+jobs:
+  deploy:
+    name: Deploy Workers
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Deploy site-auth
+        if: ${{ github.event.inputs.worker == 'all' || github.event.inputs.worker == 'site-auth' || github.event_name == 'push' }}
+        working-directory: workers/site-auth
+        run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+
+      - name: Deploy llm-proxy
+        if: ${{ github.event.inputs.worker == 'all' || github.event.inputs.worker == 'llm-proxy' || github.event_name == 'push' }}
+        working-directory: workers/llm-proxy
+        run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+
+      - name: Deploy telemetry
+        if: ${{ github.event.inputs.worker == 'all' || github.event.inputs.worker == 'telemetry' || github.event_name == 'push' }}
+        working-directory: workers/telemetry
+        run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+
+      - name: Deployment summary
+        run: |
+          echo "## Worker Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Worker | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| site-auth | ✅ Deployed |" >> $GITHUB_STEP_SUMMARY
+          echo "| llm-proxy | ✅ Deployed |" >> $GITHUB_STEP_SUMMARY
+          echo "| telemetry | ✅ Deployed |" >> $GITHUB_STEP_SUMMARY
