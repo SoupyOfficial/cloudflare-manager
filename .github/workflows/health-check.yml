@@ -16,7 +16,9 @@ jobs:
 
       - name: Check plots.madebysoupy.dev
         run: |
-          status=$(curl -s -o /dev/null -w "%{http_code}" https://plots.madebysoupy.dev/)
+          status=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "User-Agent: HealthCheckBot/1.0" \
+            https://plots.madebysoupy.dev/)
           if [ "$status" -ge 200 ] && [ "$status" -lt 400 ]; then
             echo "✅ plots.madebysoupy.dev - Status: $status"
           else
@@ -26,7 +28,9 @@ jobs:
 
       - name: Check opencode.madebysoupy.dev
         run: |
-          status=$(curl -s -o /dev/null -w "%{http_code}" https://opencode.madebysoupy.dev/)
+          status=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "User-Agent: HealthCheckBot/1.0" \
+            https://opencode.madebysoupy.dev/)
           if [ "$status" -ge 200 ] && [ "$status" -lt 400 ]; then
             echo "✅ opencode.madebysoupy.dev - Status: $status"
           else
@@ -35,7 +39,9 @@ jobs:
 
       - name: Check telemetry.madebysoupy.dev
         run: |
-          status=$(curl -s -o /dev/null -w "%{http_code}" https://telemetry.madebysoupy.dev/events)
+          status=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "User-Agent: HealthCheckBot/1.0" \
+            https://telemetry.madebysoupy.dev/events)
           if [ "$status" -ge 200 ] && [ "$status" -lt 400 ]; then
             echo "✅ telemetry.madebysoupy.dev - Status: $status"
           else
@@ -44,7 +50,9 @@ jobs:
 
       - name: Check llm-api worker
         run: |
-          status=$(curl -s -o /dev/null -w "%{http_code}" https://llm-api.jscampbell21.workers.dev/)
+          status=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "User-Agent: HealthCheckBot/1.0" \
+            https://llm-api.jscampbell21.workers.dev/)
           if [ "$status" -ge 200 ] && [ "$status" -lt 400 ]; then
             echo "✅ llm-api worker - Status: $status"
           else

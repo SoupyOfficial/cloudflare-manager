@@ -17,7 +17,8 @@
     "verify:all": "pwsh scripts/verify-all.ps1",
     "health": "pwsh scripts/health-check.ps1",
     "secret:put": "pwsh scripts/secret-put.ps1",
-    "secret:list": "pwsh scripts/secret-list.ps1"
+    "secret:list": "pwsh scripts/secret-list.ps1",
+    "sync:firewall": "pwsh scripts/sync-firewall.ps1"
   },
   "devDependencies": {
     "wrangler": "^4.0.0",

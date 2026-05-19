@@ -3,18 +3,29 @@
   "description": "Firewall rules for madebysoupy.dev zone.",
   "rules": [
     {
+      "name": "Allow health check bot",
+      "expression": "http.user_agent contains \"HealthCheckBot\"",
+      "action": "skip",
+      "enabled": true,
+      "priority": 1,
+      "description": "Skip Bot Fight Mode and Security Level for the GitHub Actions health check bot",
+      "action_parameters": {
+        "rules": ["bot_management", "security_level"]
+      }
+    },
+    {
       "name": "Block known bad bots",
       "expression": "cf.client.bot contains \"badbot\" or http.user_agent contains \"scanner\"",
       "action": "block",
       "enabled": true,
-      "priority": 1
+      "priority": 2
     },
     {
       "name": "Rate limit API endpoints",
       "expression": "http.request.uri.path contains \"/api/\"",
       "action": "managed_challenge",
       "enabled": false,
-      "priority": 2,
+      "priority": 3,
       "notes": "Disabled by default — enable if abuse detected"
     }
   ]
