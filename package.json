@@ -14,6 +14,8 @@
     "sync:dns": "pwsh scripts/sync-dns.ps1",
     "sync:access": "pwsh scripts/sync-access.ps1",
     "sync:tunnels": "pwsh scripts/sync-tunnels.ps1",
+    "sync:kv": "pwsh scripts/sync-kv.ps1",
+    "sync:r2": "pwsh scripts/sync-r2.ps1",
     "verify:all": "pwsh scripts/verify-all.ps1",
     "verify:secrets": "pwsh scripts/verify-all.ps1 -CheckGitHubSecrets",
     "health": "pwsh scripts/health-check.ps1",

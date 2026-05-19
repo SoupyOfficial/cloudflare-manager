@@ -19,8 +19,12 @@ These files are the source of truth. Use the scripts in `scripts/` to sync them 
 npm run sync:dns
 npm run sync:access
 npm run sync:tunnels
+npm run sync:kv
+npm run sync:r2
 npm run sync:firewall
 ```
+
+> KV and R2 syncs require a Cloudflare API token with **Workers KV Storage: Edit** and **R2 Storage: Edit** permissions.
 
 ## Firewall Rules
 

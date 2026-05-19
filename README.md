@@ -44,6 +44,8 @@ Set your Cloudflare API token. Create one at https://dash.cloudflare.com/profile
 - **Access** — Edit
 - **Account Settings** — Read
 - **Zone** — Read (for madebysoupy.dev)
+- **Workers KV Storage** — Edit (for KV namespace management)
+- **R2 Storage** — Edit (for R2 bucket management)
 
 ### 3. Deploy
 
@@ -121,6 +123,8 @@ Set these in GitHub repository settings → Settings → Secrets and variables �
 | `sync-dns.ps1` | Sync DNS records from config to Cloudflare |
 | `sync-access.ps1` | Sync Access applications/policies |
 | `sync-tunnels.ps1` | Generate cloudflared config files |
+| `sync-kv.ps1` | Sync KV namespaces from config to Cloudflare |
+| `sync-r2.ps1` | Sync R2 buckets from config to Cloudflare |
 | `verify-all.ps1` | Comprehensive configuration verification |
 | `verify-all.ps1 -CheckGitHubSecrets` / `verify:secrets` | Verify local env plus remote GitHub Actions secrets |
 | `health-check.ps1` | Quick endpoint reachability check |
