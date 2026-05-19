@@ -46,7 +46,7 @@ Write-Host "Syncing DNS records for zone: $zoneId" -ForegroundColor Cyan
 if ($DryRun) { Write-Host "DRY RUN MODE — no changes will be made" -ForegroundColor Yellow }
 
 # Get existing records
-$existingResponse = Invoke-RestMethod -Uri "$baseUrl?per_page=100" -Headers $headers -Method Get
+$existingResponse = Invoke-RestMethod -Uri ($baseUrl + '?per_page=100') -Headers $headers -Method Get
 $existingRecords = $existingResponse.result | Group-Object { $_.name + $_.type } -AsHashTable -AsString
 
 foreach ($desired in $dnsConfig.records) {

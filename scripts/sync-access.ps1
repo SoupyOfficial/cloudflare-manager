@@ -40,7 +40,7 @@ Write-Host "Syncing Access applications for account: $accountId" -ForegroundColo
 if ($DryRun) { Write-Host "DRY RUN MODE — no changes will be made" -ForegroundColor Yellow }
 
 # Get existing applications
-$existingResponse = Invoke-RestMethod -Uri "$baseUrl?per_page=100" -Headers $headers -Method Get
+$existingResponse = Invoke-RestMethod -Uri ($baseUrl + '?per_page=100') -Headers $headers -Method Get
 $existingApps = $existingResponse.result | Group-Object { $_.domain } -AsHashTable -AsString
 
 foreach ($desired in $accessConfig.applications) {
