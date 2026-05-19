@@ -45,13 +45,12 @@ $baseUrl = "https://api.cloudflare.com/client/v4/zones/$zoneId/dns_records"
 Write-Host "Syncing DNS records for zone: $zoneId" -ForegroundColor Cyan
 if ($DryRun) { Write-Host "DRY RUN MODE — no changes will be made" -ForegroundColor Yellow }
 
-# Get existing records
+# Get existing records — index by name only so we can update records even if type changed
 $existingResponse = Invoke-RestMethod -Uri ($baseUrl + '?per_page=100') -Headers $headers -Method Get
-$existingRecords = $existingResponse.result | Group-Object { $_.name + $_.type } -AsHashTable -AsString
+$existingByName = $existingResponse.result | Group-Object { $_.name } -AsHashTable -AsString
 
 foreach ($desired in $dnsConfig.records) {
     $fullName = if ($desired.name -eq '@') { $dnsConfig.zone } else { "$($desired.name).$($dnsConfig.zone)" }
-    $key = "$fullName$($desired.type)"
 
     Write-Host "`nProcessing: $fullName ($($desired.type))" -ForegroundColor White
 
@@ -68,13 +67,32 @@ foreach ($desired in $dnsConfig.records) {
         comment = $desired.comment
     } | ConvertTo-Json -Depth 3
 
-    if ($existingRecords.ContainsKey($key)) {
-        $existing = $existingRecords[$key] | Select-Object -First 1
-        Write-Host "  Updating existing record (ID: $($existing.id))" -ForegroundColor DarkGray
-        Invoke-RestMethod -Uri "$baseUrl/$($existing.id)" -Headers $headers -Method Put -Body $recordBody | Out-Null
+    if ($existingByName -and $existingByName.ContainsKey($fullName)) {
+        # Pick the first matching record (handles any existing type, e.g. AAAA placeholder from Workers)
+        $existing = $existingByName[$fullName] | Select-Object -First 1
+        Write-Host "  Updating existing record (ID: $($existing.id), was: $($existing.type))" -ForegroundColor DarkGray
+        try {
+            Invoke-RestMethod -Uri ($baseUrl + "/$($existing.id)") -Headers $headers -Method Put -Body $recordBody | Out-Null
+        } catch {
+            $errBody = $_ | Select-Object -ExpandProperty ErrorDetails -ErrorAction SilentlyContinue
+            if ($errBody -match '"code":\s*1043') {
+                Write-Host "  WARNING: Record is read-only (managed by Cloudflare/Workers) — skipping" -ForegroundColor Yellow
+            } else {
+                throw
+            }
+        }
     } else {
         Write-Host "  Creating new record" -ForegroundColor DarkGray
-        Invoke-RestMethod -Uri $baseUrl -Headers $headers -Method Post -Body $recordBody | Out-Null
+        try {
+            Invoke-RestMethod -Uri $baseUrl -Headers $headers -Method Post -Body $recordBody | Out-Null
+        } catch {
+            $errBody = $_ | Select-Object -ExpandProperty ErrorDetails -ErrorAction SilentlyContinue
+            if ($errBody -match '"code":\s*81053') {
+                Write-Host "  WARNING: Conflicting record exists (possibly read-only) — skipping" -ForegroundColor Yellow
+            } else {
+                throw
+            }
+        }
     }
 }
 
