@@ -15,7 +15,7 @@
     },
     {
       "name": "Block known bad bots",
-      "expression": "cf.client.bot contains \"badbot\" or http.user_agent contains \"scanner\"",
+      "expression": "http.user_agent contains \"scanner\"",
       "action": "block",
       "enabled": true,
       "priority": 2

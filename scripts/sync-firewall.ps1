@@ -8,7 +8,7 @@
     Show what would change without applying.
 .PARAMETER ZoneId
     Override zone ID from environment.
-#
+#>
 param(
     [switch]$DryRun,
     [string]$ZoneId = ''
@@ -48,7 +48,15 @@ if ($DryRun) { Write-Host "DRY RUN MODE — no changes will be made" -Foreground
 
 # Check if a custom ruleset already exists for this phase
 Write-Host "`nChecking for existing $phase ruleset..." -ForegroundColor DarkGray
-$existingResponse = Invoke-RestMethod -Uri "$baseUrl/phases/$phase/entrypoint" -Headers $headers -Method Get -ErrorAction SilentlyContinue
+$existingResponse = $null
+try {
+    $existingResponse = Invoke-RestMethod -Uri "$baseUrl/phases/$phase/entrypoint" -Headers $headers -Method Get
+}
+catch {
+    # Cloudflare returns an error when no entrypoint ruleset exists for the phase yet.
+    # Treat that as "no existing ruleset" so first-time deploy can create one.
+    $existingResponse = $null
+}
 
 $existingRulesetId = $null
 $existingRules = @()
@@ -81,13 +89,27 @@ foreach ($rule in $rulesConfig.rules) {
     if ($rule.action_parameters) {
         $actionParams = @{}
         if ($rule.action_parameters.rules) {
-            $actionParams.rules = @()
+            $phases = @()
+            $products = @()
             foreach ($r in $rule.action_parameters.rules) {
-                $actionParams.rules += @{
-                    id = $r
-                    action = "skip"
+                switch ($r) {
+                    # Skip Super Bot Fight Mode phase (Bot Fight Mode itself cannot be skipped via custom rules)
+                    'bot_management' {
+                        $phases += 'http_request_sbfm'
+                    }
+                    # Skip legacy Security Level product
+                    'security_level' {
+                        $products += 'securityLevel'
+                    }
+                    default {
+                        # Allow explicit product API values in config (for example: zoneLockdown, uaBlock, bic)
+                        $products += $r
+                    }
                 }
             }
+
+            if ($phases.Count -gt 0) { $actionParams.phases = @($phases | Select-Object -Unique) }
+            if ($products.Count -gt 0) { $actionParams.products = @($products | Select-Object -Unique) }
         }
         $desiredRule.action_parameters = $actionParams
     }
