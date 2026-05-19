@@ -15,6 +15,7 @@
     "sync:access": "pwsh scripts/sync-access.ps1",
     "sync:tunnels": "pwsh scripts/sync-tunnels.ps1",
     "verify:all": "pwsh scripts/verify-all.ps1",
+    "verify:secrets": "pwsh scripts/verify-all.ps1 -CheckGitHubSecrets",
     "health": "pwsh scripts/health-check.ps1",
     "secret:put": "pwsh scripts/secret-put.ps1",
     "secret:list": "pwsh scripts/secret-list.ps1",

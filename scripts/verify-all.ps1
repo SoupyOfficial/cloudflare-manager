@@ -2,19 +2,79 @@
 .SYNOPSIS
     Comprehensive verification of all Cloudflare resources.
 .DESCRIPTION
-    Checks workers, DNS, tunnels, and Access applications.
+    Checks workers, DNS, tunnels, Access applications, local Cloudflare env vars,
+    and optionally GitHub Actions secrets.
 #>
 param(
-    [string]$WorkerName = ''
+    [string]$WorkerName = '',
+    [switch]$CheckGitHubSecrets
 )
 
 $ErrorActionPreference = 'Continue'
 
 $rootDir = Split-Path $PSScriptRoot -Parent
 $workersDir = Join-Path $rootDir 'workers'
+$envFile = Join-Path $rootDir '.env'
+$requiredEnvVars = @('CF_API_TOKEN', 'CF_ZONE_ID')
+
+function Get-EnvValueFromFile {
+    param([string]$Name)
+
+    if (-not (Test-Path $envFile)) { return $null }
+
+    $line = Get-Content $envFile | Where-Object { $_ -match "^$Name=" } | Select-Object -First 1
+    if (-not $line) { return $null }
+
+    return $line.Split('=', 2)[1].Trim()
+}
 
 Write-Host "=== Cloudflare Infrastructure Verification ===" -ForegroundColor Cyan
 Write-Host ""
+
+# Check local env configuration
+Write-Host "--- Local Environment ---" -ForegroundColor White
+if (Test-Path $envFile) {
+    Write-Host "  .env: FOUND" -ForegroundColor Green
+} else {
+    Write-Host "  .env: MISSING" -ForegroundColor Red
+}
+
+foreach ($name in $requiredEnvVars) {
+    $value = [System.Environment]::GetEnvironmentVariable($name, 'Process')
+    if (-not $value) {
+        $value = Get-EnvValueFromFile -Name $name
+    }
+    if ($value) {
+        Write-Host "  $($name): set" -ForegroundColor Green
+    } else {
+        Write-Host "  $($name): MISSING" -ForegroundColor Red
+    }
+}
+
+if ($CheckGitHubSecrets) {
+    Write-Host "`n--- GitHub Actions Secrets ---" -ForegroundColor White
+    if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
+        Write-Host "  gh CLI: MISSING (skipping remote secret check)" -ForegroundColor Yellow
+    } else {
+        try {
+            $secretNames = @()
+            foreach ($line in (gh secret list -R SoupyOfficial/cloudflare-manager)) {
+                if (-not [string]::IsNullOrWhiteSpace($line)) {
+                    $secretNames += ($line -split '\s+')[0]
+                }
+            }
+            foreach ($name in $requiredEnvVars) {
+                if ($secretNames -contains $name) {
+                    Write-Host "  $($name): present" -ForegroundColor Green
+                } else {
+                    Write-Host "  $($name): MISSING" -ForegroundColor Red
+                }
+            }
+        } catch {
+            Write-Host "  Unable to query GitHub secrets: $($_.Exception.Message)" -ForegroundColor Yellow
+        }
+    }
+}
 
 # Check workers
 Write-Host "--- Workers ---" -ForegroundColor White

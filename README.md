@@ -122,6 +122,7 @@ Set these in GitHub repository settings → Settings → Secrets and variables �
 | `sync-access.ps1` | Sync Access applications/policies |
 | `sync-tunnels.ps1` | Generate cloudflared config files |
 | `verify-all.ps1` | Comprehensive configuration verification |
+| `verify-all.ps1 -CheckGitHubSecrets` / `verify:secrets` | Verify local env plus remote GitHub Actions secrets |
 | `health-check.ps1` | Quick endpoint reachability check |
 | `secret-put.ps1` | Set Worker secrets interactively |
 | `secret-list.ps1` | List expected secrets per worker |
