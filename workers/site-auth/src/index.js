@@ -13,6 +13,7 @@
  * - UPSTREAM_URL (default: https://soupyofficial.github.io/plot_generator/)
  * - LOGIN_URL (default: https://plots.madebysoupy.dev/)
  * - OPENCODE_UPSTREAM_URL (default: https://opencode-origin.madebysoupy.dev/)
+ * - OPENCODE_WS_UPSTREAM_URL (default: https://opencode-ws.madebysoupy.dev/)
  */
 
 const DEFAULT_UPSTREAM_URL = 'https://soupyofficial.github.io/plot_generator/'
@@ -28,6 +29,7 @@ const SESSION_MAX_AGE_SECONDS = 60 * 60 * 12
 const OPENCODE_PUBLIC_PATHS = new Set(['/site.webmanifest'])
 const CSP_UNSAFE_INLINE = "'unsafe-inline'"
 const CLOUDFLARE_INSIGHTS_SCRIPT_SRC = 'https://static.cloudflareinsights.com'
+const DEFAULT_OPENCODE_WS_UPSTREAM_URL = 'https://opencode-ws.madebysoupy.dev/'
 
 export default {
   async fetch(request, env) {
@@ -128,16 +130,26 @@ export default {
       ? (env.OPENCODE_UPSTREAM_URL || DEFAULT_OPENCODE_UPSTREAM_URL)
       : (env.UPSTREAM_URL || DEFAULT_UPSTREAM_URL)
 
-    // WebSocket connections cannot be proxied through Cloudflare Workers.
-    // This is a platform limitation: https://developers.cloudflare.com/workers/platform/limits/
-    // The OpenCode terminal feature uses WebSocket and will not work through this gateway.
+    // Cloudflare Workers support WebSocket proxying via fetch().
+    // WS upgrades for opencode are routed through opencode-ws (proxied=true tunnel endpoint)
+    // rather than opencode-origin (proxied=false) so Cloudflare edge handles the upgrade correctly.
+    // Do NOT pass redirect:'manual' for WebSocket — the runtime pipes the connection.
     const isWebSocketUpgrade = request.headers.get('Upgrade') === 'websocket'
     if (isWebSocketUpgrade) {
-      return new Response(
-        'WebSocket connections are not supported through Cloudflare Workers. ' +
-        'For terminal access, please connect directly to http://127.0.0.1:4100',
-        { status: 502, headers: { 'Content-Type': 'text/plain' } }
+      if (!isOpencodeHost) {
+        return new Response('WebSocket not supported on this host', {
+          status: 502,
+          headers: { 'Content-Type': 'text/plain' },
+        })
+      }
+      const wsUpstreamBase = env.OPENCODE_WS_UPSTREAM_URL || DEFAULT_OPENCODE_WS_UPSTREAM_URL
+      const wsTargetUrl = buildTargetUrl(wsUpstreamBase, incomingUrl)
+      const wsRequest = new Request(wsTargetUrl.toString(), request)
+      wsRequest.headers.set(
+        'Authorization',
+        `Basic ${btoa(`${expectedUser}:${expectedPass}`)}`,
       )
+      return fetch(wsRequest)
     }
 
     const targetUrl = buildTargetUrl(upstreamBase, incomingUrl, {

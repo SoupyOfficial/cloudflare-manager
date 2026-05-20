@@ -19,29 +19,43 @@
     },
     {
       "name": "opencode",
-      "type": "CNAME",
-      "content": "<tunnel-hostname>",
+      "type": "AAAA",
+      "content": "100::",
       "proxied": true,
       "comment": "OpenCode IDE, protected by site-auth worker. Origin: opencode-origin.madebysoupy.dev"
     },
     {
       "name": "opencode-origin",
       "type": "CNAME",
-      "content": "<tunnel-id>.cfargotunnel.com",
+      "content": "7ee20289-1222-4023-89af-d3b688005abb.cfargotunnel.com",
       "proxied": false,
       "comment": "Cloudflare Tunnel origin for OpenCode (internal, not directly accessible)"
     },
     {
+      "name": "opencode-ws",
+      "type": "CNAME",
+      "content": "7ee20289-1222-4023-89af-d3b688005abb.cfargotunnel.com",
+      "proxied": true,
+      "comment": "Direct WebSocket tunnel endpoint for OpenCode — used by site-auth Worker for WS upgrades"
+    },
+    {
       "name": "llm",
       "type": "CNAME",
-      "content": "<tunnel-id>.cfargotunnel.com",
+      "content": "7ee20289-1222-4023-89af-d3b688005abb.cfargotunnel.com",
       "proxied": true,
       "comment": "Ollama LLM API via Cloudflare Tunnel, protected by Access"
     },
     {
+      "name": "llm-api",
+      "type": "AAAA",
+      "content": "100::",
+      "proxied": true,
+      "comment": "LLM API proxy worker endpoint"
+    },
+    {
       "name": "telemetry",
       "type": "CNAME",
-      "content": "plot-generator-telemetry.<account>.workers.dev",
+      "content": "plot-generator-telemetry.jscampbell21.workers.dev",
       "proxied": true,
       "comment": "Telemetry worker endpoint"
     },

@@ -4,7 +4,7 @@
 
 tunnel:
   name: ollama-home
-  id: ""  # Set via: cloudflared tunnel info ollama-home
+  id: "7ee20289-1222-4023-89af-d3b688005abb"
   credentials_file_ref: "secrets/ollama-home-creds.json"  # Reference, not actual file
 
 ingress:
@@ -30,9 +30,21 @@ ingress:
       httpHostHeader: localhost:4096
     access_policy: service-auth-only
 
+  - hostname: opencode-ws.madebysoupy.dev
+    service: http://localhost:4096
+    machine: windows-pc
+    origin_request:
+      connectTimeout: 30s
+      tlsTimeout: 30s
+      tcpKeepAlive: 30s
+      keepAliveTimeout: 90s
+      httpHostHeader: localhost:4096
+    access_policy: service-auth-only
+
   - service: http_status:404
 
 notes:
   - "Only one machine should run this tunnel at a time for shared hostnames"
   - "Use stop-tunnel before switching machines"
   - "OpenCode public hostname (opencode.madebysoupy.dev) is protected by site-auth worker, not this tunnel"
+  - "opencode-ws.madebysoupy.dev is the direct WebSocket tunnel endpoint used by the site-auth Worker for WS upgrades"
