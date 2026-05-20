@@ -21,7 +21,13 @@
     "health": "pwsh scripts/health-check.ps1",
     "secret:put": "pwsh scripts/secret-put.ps1",
     "secret:list": "pwsh scripts/secret-list.ps1",
-    "sync:firewall": "pwsh scripts/sync-firewall.ps1"
+    "sync:firewall": "pwsh scripts/sync-firewall.ps1",
+    "service:opencode": "pwsh scripts/restart-opencode-service.ps1",
+    "tunnel:opencode": "pwsh scripts/restart-opencode-tunnel.ps1",
+    "tunnel:llm": "pwsh scripts/restart-llm-tunnel.ps1",
+    "tunnel:all": "pwsh scripts/restart-all-tunnels.ps1",
+    "tunnel:status": "pwsh scripts/tunnel-status.ps1",
+    "shortcuts": "pwsh scripts/Create-DesktopShortcuts.ps1"
   },
   "devDependencies": {
     "wrangler": "^4.0.0",
