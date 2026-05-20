@@ -1,6 +1,7 @@
 # Tunnel: ollama-home
-# Purpose: Exposes local Ollama and OpenCode services
+# Purpose: Exposes local Ollama LLM service
 # Machines: Windows PC (primary), Mac Mini (secondary)
+# Note: OpenCode is served by a SEPARATE tunnel (475f52fb) via opencode-config.yml
 
 tunnel:
   name: ollama-home
@@ -19,32 +20,10 @@ ingress:
       httpHostHeader: localhost:11434
     access_policy: cloudflare-access
 
-  - hostname: opencode-origin.madebysoupy.dev
-    service: http://localhost:4096
-    machine: windows-pc
-    origin_request:
-      connectTimeout: 30s
-      tlsTimeout: 30s
-      tcpKeepAlive: 30s
-      keepAliveTimeout: 90s
-      httpHostHeader: localhost:4096
-    access_policy: service-auth-only
-
-  - hostname: opencode-ws.madebysoupy.dev
-    service: http://localhost:4096
-    machine: windows-pc
-    origin_request:
-      connectTimeout: 30s
-      tlsTimeout: 30s
-      tcpKeepAlive: 30s
-      keepAliveTimeout: 90s
-      httpHostHeader: localhost:4096
-    access_policy: service-auth-only
-
   - service: http_status:404
 
 notes:
-  - "Only one machine should run this tunnel at a time for shared hostnames"
+  - "Only one machine should run this tunnel at a time"
   - "Use stop-tunnel before switching machines"
-  - "OpenCode public hostname (opencode.madebysoupy.dev) is protected by site-auth worker, not this tunnel"
-  - "opencode-ws.madebysoupy.dev is the direct WebSocket tunnel endpoint used by the site-auth Worker for WS upgrades"
+  - "OpenCode (opencode-origin + opencode-ws) is served by tunnel 475f52fb via opencode-config.yml"
+  - "OpenCode public hostname (opencode.madebysoupy.dev) is protected by site-auth worker"
