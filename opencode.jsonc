@@ -1,0 +1,37 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "default_agent": "trailmaster",
+  "instructions": [
+    "README.md"
+  ],
+  "mcp": {
+    // Cloudflare account operations (DNS, Access, KV, R2, Tunnels, Workers)
+    "cloudflare": {
+      "type": "remote",
+      "url": "https://mcp.cloudflare.com/mcp",
+      "enabled": true
+    },
+    // Cloudflare official documentation
+    "cloudflare-docs": {
+      "type": "remote",
+      "url": "https://docs.mcp.cloudflare.com/mcp",
+      "enabled": true
+    },
+    // Workers bindings reference (KV, R2, D1, AI, Queues, etc.)
+    "cloudflare-bindings": {
+      "type": "remote",
+      "url": "https://bindings.mcp.cloudflare.com/mcp",
+      "enabled": true
+    }
+  },
+  "permission": {
+    "bash": {
+      "*": "ask",
+      "wrangler dev *": "allow",
+      "wrangler deploy *": "ask",
+      "pwsh scripts/*.ps1": "ask",
+      "git push *": "ask",
+      "rm -rf *": "deny"
+    }
+  }
+}
