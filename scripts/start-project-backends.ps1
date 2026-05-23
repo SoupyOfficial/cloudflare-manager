@@ -1,14 +1,21 @@
-$oc = "$env:LOCALAPPDATA\Programs\opencode\opencode.exe"
 $bun = "$env:USERPROFILE\.bun\bin\bun.exe"
 $portal = "$env:APPDATA\npm\node_modules\openportal\dist\index.js"
 $exclude = "C:\Users\JSCam\Documents\Development\cloudflare-manager"
 
 # Ensure opencode is on PATH so spawned openportal processes can find it
-@("$env:USERPROFILE\.bun\bin", "$env:LOCALAPPDATA\Programs\opencode", "$env:LOCALAPPDATA\Microsoft\WinGet\Links") | ForEach-Object {
+@("$env:LOCALAPPDATA\Programs\opencode", "$env:USERPROFILE\.opencode\bin", "$env:USERPROFILE\.bun\bin", "$env:LOCALAPPDATA\Microsoft\WinGet\Links") | ForEach-Object {
     if ((Test-Path $_) -and ($env:Path -notlike "*$_*")) { $env:Path = "$_;$env:Path" }
 }
 
-if (-not (Test-Path $oc))     { Write-Error "opencode not found at $oc"; exit 1 }
+$oc = (Get-Command opencode -ErrorAction SilentlyContinue)?.Source
+if (-not $oc) {
+    $oc = @(
+        "$env:LOCALAPPDATA\Programs\opencode\opencode.exe",
+        "$env:USERPROFILE\.opencode\bin\opencode.exe",
+        "$env:LOCALAPPDATA\Microsoft\WinGet\Links\opencode.exe"
+    ) | Where-Object { Test-Path $_ } | Select-Object -First 1
+}
+if (-not $oc) { Write-Error "opencode not found"; exit 1 }
 if (-not (Test-Path $bun))    { Write-Error "bun not found at $bun"; exit 1 }
 if (-not (Test-Path $portal)) { Write-Error "openportal dist not found at $portal"; exit 1 }
 
