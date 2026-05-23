@@ -72,6 +72,49 @@
       "content": "192.0.2.1",
       "proxied": true,
       "comment": "Root domain placeholder — update when ready"
+    },
+
+    {
+      "name": "test-plots",
+      "type": "CNAME",
+      "content": "soupyofficial.github.io",
+      "proxied": true,
+      "comment": "Test env: Plot Generator static site (GitHub Pages)"
+    },
+    {
+      "name": "test-apps",
+      "type": "CNAME",
+      "content": "soupyofficial.github.io",
+      "proxied": true,
+      "comment": "Test env: Plot Generator app, protected by site-auth-test worker"
+    },
+    {
+      "name": "test-opencode",
+      "type": "AAAA",
+      "content": "100::",
+      "proxied": true,
+      "comment": "Test env: OpenCode IDE placeholder — intercepted by site-auth-test worker route"
+    },
+    {
+      "name": "test-llm",
+      "type": "CNAME",
+      "content": "7ee20289-1222-4023-89af-d3b688005abb.cfargotunnel.com",
+      "proxied": true,
+      "comment": "Test env: Ollama LLM API via ollama-home tunnel, protected by Access"
+    },
+    {
+      "name": "test-llm-api",
+      "type": "AAAA",
+      "content": "100::",
+      "proxied": true,
+      "comment": "Test env: LLM API proxy worker endpoint"
+    },
+    {
+      "name": "test-telemetry",
+      "type": "AAAA",
+      "content": "100::",
+      "proxied": true,
+      "comment": "Test env: Telemetry worker endpoint"
     }
   ]
 }

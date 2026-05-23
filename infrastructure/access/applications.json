@@ -34,6 +34,30 @@
       "policies": [],
       "worker_protection": "plot-generator-site-auth",
       "notes": "Protected by custom Worker auth (site-auth), NOT by Access email challenge. Remove any Access policies for this hostname."
+    },
+    {
+      "name": "LLM API (Test)",
+      "domain": "test-llm.madebysoupy.dev",
+      "type": "self_hosted",
+      "session_duration": "24h",
+      "policies": [
+        {
+          "name": "Allow authenticated users",
+          "action": "allow",
+          "include": [
+            {
+              "type": "email",
+              "emails": ["jcampbell@example.com"]
+            },
+            {
+              "type": "service_token",
+              "service_token_ref": "plot-gen"
+            }
+          ]
+        }
+      ],
+      "service_auth": true,
+      "notes": "Test env: mirrors LLM API Access policy. Points to ollama-home tunnel via test-llm CNAME."
     }
   ]
 }

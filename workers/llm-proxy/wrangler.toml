@@ -13,3 +13,21 @@ ALLOWED_ORIGINS = "https://apps.madebysoupy.dev,https://plot-generator.madebysou
 # LLM_HOST_CLIENT_SECRET
 # OPENAI_API_KEY
 # CLAUDE_API_KEY
+
+# ─── Test Environment ─────────────────────────────────────────────────────────
+[env.test]
+name = "llm-api-test"
+workers_dev = true
+
+[[env.test.routes]]
+pattern = "test-llm-api.madebysoupy.dev/*"
+zone_name = "madebysoupy.dev"
+
+[env.test.vars]
+ALLOWED_ORIGINS = "https://test-apps.madebysoupy.dev,https://test-plots.madebysoupy.dev"
+
+# ─── Test Secrets (set via `wrangler secret put --env test`, do NOT commit values) ────
+# LLM_HOST_CLIENT_ID
+# LLM_HOST_CLIENT_SECRET
+# OPENAI_API_KEY
+# CLAUDE_API_KEY

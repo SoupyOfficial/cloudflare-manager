@@ -19,10 +19,12 @@
 const DEFAULT_UPSTREAM_URL = 'https://soupyofficial.github.io/plot_generator/'
 const DEFAULT_OPENCODE_UPSTREAM_URL = 'https://opencode-origin.madebysoupy.dev/'
 const DEFAULT_LOGIN_URL = 'https://plots.madebysoupy.dev/'
-const APPS_HOST = 'apps.madebysoupy.dev'
-const PLOTS_HOST = 'plots.madebysoupy.dev'
-const OPENCODE_HOST = 'opencode.madebysoupy.dev'
 const APPS_BASE_PATH = '/plot_generator'
+// Host names are env-overridable so the same worker code handles both prod and test
+// environments. Override via APPS_HOST / PLOTS_HOST / OPENCODE_HOST vars in wrangler.toml.
+const DEFAULT_APPS_HOST = 'apps.madebysoupy.dev'
+const DEFAULT_PLOTS_HOST = 'plots.madebysoupy.dev'
+const DEFAULT_OPENCODE_HOST = 'opencode.madebysoupy.dev'
 const REALM = 'Plot Generator'
 const SESSION_COOKIE_NAME = 'pg_auth'
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 12
@@ -36,6 +38,10 @@ export default {
     if (request.method === 'OPTIONS') {
       return new Response(null, { status: 204 })
     }
+
+    const APPS_HOST = env.APPS_HOST || DEFAULT_APPS_HOST
+    const PLOTS_HOST = env.PLOTS_HOST || DEFAULT_PLOTS_HOST
+    const OPENCODE_HOST = env.OPENCODE_HOST || DEFAULT_OPENCODE_HOST
 
     const incomingUrl = new URL(request.url)
     const isAppsHost = incomingUrl.hostname === APPS_HOST
@@ -106,9 +112,9 @@ export default {
 
     if (isPlotsHost) {
       const returnTo = incomingUrl.searchParams.get('return_to')
-      const redirectTarget = isSafeReturnTo(returnTo)
+      const redirectTarget = isSafeReturnTo(returnTo, APPS_HOST, OPENCODE_HOST)
         ? returnTo
-        : buildAppsRedirectUrl(incomingUrl)
+        : buildAppsRedirectUrl(incomingUrl, APPS_HOST)
       const redirectHeaders = new Headers({
         Location: redirectTarget,
         'Cache-Control': 'no-store',
@@ -314,8 +320,8 @@ function buildLoginRedirectUrl(baseLoginUrl, incomingUrl) {
   return target.toString()
 }
 
-function buildAppsRedirectUrl(incomingUrl) {
-  const target = new URL(`https://${APPS_HOST}${APPS_BASE_PATH}`)
+function buildAppsRedirectUrl(incomingUrl, appsHost) {
+  const target = new URL(`https://${appsHost}${APPS_BASE_PATH}`)
   const normalizedPath = incomingUrl.pathname === '/' ? '' : incomingUrl.pathname
   target.pathname = `${APPS_BASE_PATH}${normalizedPath}`
 
@@ -356,16 +362,16 @@ async function buildSessionCookie(expectedUser, expectedPass) {
   return `${SESSION_COOKIE_NAME}=${value}; Max-Age=${SESSION_MAX_AGE_SECONDS}; Domain=.madebysoupy.dev; Path=/; HttpOnly; Secure; SameSite=Lax`
 }
 
-function isSafeReturnTo(returnTo) {
+function isSafeReturnTo(returnTo, appsHost, opencodeHost) {
   if (!returnTo) return false
 
   try {
     const url = new URL(returnTo)
-    if (url.hostname === APPS_HOST) {
+    if (url.hostname === appsHost) {
       return url.pathname.startsWith(APPS_BASE_PATH)
     }
 
-    if (url.hostname === OPENCODE_HOST) {
+    if (url.hostname === opencodeHost) {
       return true
     }
 

@@ -8,6 +8,13 @@
       "id": "c8013eb8e41440719e0b41e2a7ab2f67",
       "worker": "plot-generator-site-auth",
       "purpose": "Stores session data for site-auth worker"
+    },
+    {
+      "binding": "SESSION_STORE",
+      "name": "cloudflare-manager-session-store-test",
+      "id": "",
+      "worker": "plot-generator-site-auth-test",
+      "purpose": "Stores session data for site-auth worker (test environment). Create with: wrangler kv namespace create cloudflare-manager-session-store-test"
     }
   ]
 }

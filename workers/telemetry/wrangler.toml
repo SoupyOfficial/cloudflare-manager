@@ -12,3 +12,16 @@ zone_name = "madebysoupy.dev"
 # TURSO_URL
 # TURSO_AUTH_TOKEN
 # TELEMETRY_TOKEN (optional — leave unset to accept unauthenticated requests)
+
+# ─── Test Environment ─────────────────────────────────────────────────────────
+[env.test]
+name = "plot-generator-telemetry-test"
+
+[[env.test.routes]]
+pattern = "test-telemetry.madebysoupy.dev/events"
+zone_name = "madebysoupy.dev"
+
+# ─── Test Secrets (set via `wrangler secret put --env test`, do NOT commit values) ────
+# TURSO_URL
+# TURSO_AUTH_TOKEN
+# TELEMETRY_TOKEN (optional)

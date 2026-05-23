@@ -28,3 +28,34 @@ zone_name = "madebysoupy.dev"
 # Optional:
 # LOGIN_URL (default: https://plots.madebysoupy.dev/)
 # UPSTREAM_URL (default: https://soupyofficial.github.io/plot_generator/)
+
+# ─── Test Environment ─────────────────────────────────────────────────────────
+[env.test]
+name = "plot-generator-site-auth-test"
+
+[[env.test.routes]]
+pattern = "test-plots.madebysoupy.dev/*"
+zone_name = "madebysoupy.dev"
+
+[[env.test.routes]]
+pattern = "test-apps.madebysoupy.dev/plot_generator"
+zone_name = "madebysoupy.dev"
+
+[[env.test.routes]]
+pattern = "test-apps.madebysoupy.dev/plot_generator/*"
+zone_name = "madebysoupy.dev"
+
+[[env.test.routes]]
+pattern = "test-opencode.madebysoupy.dev/*"
+zone_name = "madebysoupy.dev"
+
+[env.test.vars]
+APPS_HOST = "test-apps.madebysoupy.dev"
+PLOTS_HOST = "test-plots.madebysoupy.dev"
+OPENCODE_HOST = "test-opencode.madebysoupy.dev"
+LOGIN_URL = "https://test-plots.madebysoupy.dev/"
+
+# ─── Test Secrets (set via `wrangler secret put --env test`, do NOT commit values) ────
+# BASIC_AUTH_USERNAME
+# BASIC_AUTH_PASSWORD
+# OPENCODE_UPSTREAM_URL  (optional — only if test-opencode has a tunnel configured)
