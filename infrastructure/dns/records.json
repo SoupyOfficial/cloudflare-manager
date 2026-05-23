@@ -41,9 +41,9 @@
     {
       "name": "mac",
       "type": "CNAME",
-      "content": "<MAC-TUNNEL-UUID>.cfargotunnel.com",
+      "content": "7ee20289-1222-4023-89af-d3b688005abb.cfargotunnel.com",
       "proxied": true,
-      "comment": "OpenCode IDE on Mac Mini — direct tunnel, protected by Cloudflare Access. Fill UUID from: cloudflared tunnel info opencode-origin (run on Mac)"
+      "comment": "OpenCode IDE on Mac Mini — served by ollama-home tunnel (same as llm.), protected by Cloudflare Access"
     },
     {
       "name": "llm",

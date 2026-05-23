@@ -1,7 +1,7 @@
 # Tunnel: ollama-home
-# Purpose: Exposes local Ollama LLM service
-# Machines: Windows PC (primary), Mac Mini (secondary)
-# Note: OpenCode is served by a SEPARATE tunnel (475f52fb) via opencode-config.yml
+# Purpose: Exposes Ollama LLM + OpenCode web UI from Mac Mini
+# Machines: Mac Mini (primary for this tunnel)
+# Note: OpenCode on Windows uses a SEPARATE tunnel (475f52fb) via opencode-config.yml
 
 tunnel:
   name: ollama-home
@@ -11,7 +11,7 @@ tunnel:
 ingress:
   - hostname: llm.madebysoupy.dev
     service: http://localhost:11434
-    machine: windows-pc  # or mac-mini
+    machine: mac-mini
     origin_request:
       connectTimeout: 30s
       tlsTimeout: 30s
@@ -20,10 +20,21 @@ ingress:
       httpHostHeader: localhost:11434
     access_policy: cloudflare-access
 
+  - hostname: mac.opencode.madebysoupy.dev
+    service: http://localhost:4096
+    machine: mac-mini
+    origin_request:
+      connectTimeout: 30s
+      tlsTimeout: 30s
+      tcpKeepAlive: 30s
+      keepAliveTimeout: 90s
+      httpHostHeader: localhost:4096
+    access_policy: cloudflare-access
+
   - service: http_status:404
 
 notes:
-  - "Only one machine should run this tunnel at a time"
-  - "Use stop-tunnel before switching machines"
-  - "OpenCode (opencode-origin + opencode-ws) is served by tunnel 475f52fb via opencode-config.yml"
-  - "OpenCode public hostname (opencode.madebysoupy.dev) is protected by site-auth worker"
+  - "Mac Mini only — runs both Ollama (llm.) and OpenCode (mac.opencode.)"
+  - "OpenCode on Windows uses a separate tunnel (475f52fb) for opencode.madebysoupy.dev"
+  - "mac.opencode. CORS: opencode service launches with --cors https://opencode.madebysoupy.dev (see opencode-manager)"
+  - "To activate mac.opencode. ingress, update ~/.cloudflared/config.yml on Mac and reload the tunnel"

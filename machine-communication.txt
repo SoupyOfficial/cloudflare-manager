@@ -1,0 +1,78 @@
+# AGENT TASK — Mac Mini setup for mac.opencode.madebysoupy.dev
+# Sent from: Windows (opencode-manager)
+# Date: 2026-05-23
+#
+# Context: We are exposing the OpenCode web UI running on this Mac at
+# mac.opencode.madebysoupy.dev via the existing ollama-home Cloudflare Tunnel.
+# The Windows instance is the primary at opencode.madebysoupy.dev.
+# DNS and Cloudflare Access records have already been synced from Windows.
+#
+# DO ALL OF THE FOLLOWING:
+
+## STEP 1 — Reinstall the opencode launchd plists
+#
+# The opencode service plist has been updated to add a CORS flag so the
+# Windows-hosted UI can connect to this Mac's OpenCode instance.
+# Run the install script from THIS repo (opencode-manager):
+
+cd ~/path/to/opencode-manager   # adjust if needed — wherever you cloned it
+./scripts/restart-opencode.sh --install
+
+# This writes updated plists to ~/Library/LaunchAgents/ and reloads them.
+# Verify the opencode service started: launchctl list com.opencode.service
+
+
+## STEP 2 — Update the cloudflared tunnel config to add the OpenCode ingress
+#
+# The ollama-home tunnel (7ee20289-1222-4023-89af-d3b688005abb) currently only
+# serves llm.madebysoupy.dev → localhost:11434. We need to add a second ingress
+# rule for mac.opencode.madebysoupy.dev → localhost:4096.
+#
+# Show the current config first:
+cat ~/.cloudflared/config.yml
+#
+# The file must contain ALL THREE of the following ingress rules (order matters,
+# catch-all must be last). Edit it so it reads exactly:
+#
+#   tunnel: 7ee20289-1222-4023-89af-d3b688005abb
+#   credentials-file: /Users/<yourname>/.cloudflared/7ee20289-1222-4023-89af-d3b688005abb.json
+#   ingress:
+#     - hostname: llm.madebysoupy.dev
+#       service: http://localhost:11434
+#     - hostname: mac.opencode.madebysoupy.dev
+#       service: http://localhost:4096
+#     - service: http_status:404
+#
+# If the file uses a different structure, preserve existing fields and add
+# the mac.opencode ingress rule before the catch-all (http_status:404) line.
+# Do NOT remove the llm.madebysoupy.dev rule.
+
+
+## STEP 3 — Reload the tunnel to pick up the new ingress rule
+
+launchctl unload ~/Library/LaunchAgents/com.cloudflare.tunnel.opencode.plist
+launchctl load   ~/Library/LaunchAgents/com.cloudflare.tunnel.opencode.plist
+
+# Wait ~5 seconds, then verify the tunnel is running:
+launchctl list com.cloudflare.tunnel.opencode
+
+
+## STEP 4 — Verify end-to-end
+
+# Check opencode is listening locally:
+curl -s http://localhost:4096/global/health
+
+# Check the tunnel ingress resolves (requires DNS to have propagated):
+curl -s https://mac.opencode.madebysoupy.dev/global/health
+# Expected: {"healthy":true,"version":"..."}
+# If you get a Cloudflare Access challenge page (HTML), that is correct —
+# it means the tunnel is working and Access is protecting it.
+
+
+## STEP 5 — Report back
+#
+# After completing the above, update this file with a brief status summary
+# so Windows can confirm the setup is complete. Example:
+#
+#   DONE 2026-05-23: Steps 1-4 complete. curl localhost:4096/global/health OK.
+#   Tunnel ingress active. mac.opencode.madebysoupy.dev returns CF Access page.
