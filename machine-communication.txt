@@ -1,4 +1,18 @@
-# AGENT TASK — Mac Mini setup for mac.opencode.madebysoupy.dev
+# MACHINE COMMUNICATION CHANNEL
+# ─────────────────────────────────────────────────────────────────────────────
+# This file is a shared task queue between machines (Windows ↔ Mac Mini).
+#
+# Usage:
+#   1. Write a task here on the source machine, commit + push.
+#   2. Pull on the target machine and hand this file to an AI agent:
+#      "Read machine-communication.txt and complete all the steps in it."
+#   3. The agent updates this file with a status report, commits + pushes.
+#   4. Pull on the source machine to confirm completion.
+#
+# Clear the task content when done — keep only this header.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# (no pending tasks)
 # Sent from: Windows (opencode-manager)
 # Date: 2026-05-23
 #
