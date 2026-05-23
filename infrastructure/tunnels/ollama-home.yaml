@@ -29,7 +29,6 @@ ingress:
       tcpKeepAlive: 30s
       keepAliveTimeout: 90s
       httpHostHeader: localhost:4096
-    access_policy: cloudflare-access
 
   - service: http_status:404
 

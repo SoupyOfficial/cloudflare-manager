@@ -12,7 +12,76 @@
 # Clear the task content when done — keep only this header.
 # ─────────────────────────────────────────────────────────────────────────────
 
-# (no pending tasks)
+# AGENT TASK — Mac Mini DNS fix for mac.opencode.madebysoupy.dev
+# Sent from: Windows
+# Date: 2026-05-23
+#
+# The DNS sync had a bug — it created mac.madebysoupy.dev instead of
+# mac.opencode.madebysoupy.dev. That is now fixed and the correct CNAME
+# has been synced to Cloudflare from Windows. The wrong record may still
+# exist and needs to be deleted.
+#
+# DO ALL OF THE FOLLOWING:
+
+## STEP 1 — Pull latest changes
+
+cd ~/Documents/Development/cloudflare-manager && git pull
+cd ~/Documents/Development/opencode-manager && git pull
+
+
+## STEP 2 — Delete the wrong DNS record (mac.madebysoupy.dev)
+#
+# The first sync run created the wrong subdomain. Delete it via the Cloudflare API:
+
+$env:CF_API_TOKEN = "<your-api-token>"   # set this from your .env or secrets
+$env:CF_ZONE_ID   = "<your-zone-id>"
+
+# Find the wrong record ID and delete it:
+$headers = @{ Authorization = "Bearer $env:CF_API_TOKEN" }
+$records = Invoke-RestMethod "https://api.cloudflare.com/client/v4/zones/$env:CF_ZONE_ID/dns_records?name=mac.madebysoupy.dev" -Headers $headers
+$records.result | ForEach-Object {
+    Write-Host "Deleting: $($_.name) ($($_.id))"
+    Invoke-RestMethod "https://api.cloudflare.com/client/v4/zones/$env:CF_ZONE_ID/dns_records/$($_.id)" -Method Delete -Headers $headers
+}
+# If no records found that is fine — nothing to delete.
+
+
+## STEP 3 — Verify cloudflared config has the correct hostname
+#
+# The ingress rule must say mac.opencode.madebysoupy.dev, NOT mac.madebysoupy.dev.
+
+cat ~/.cloudflared/config.yml
+# Confirm this line is present:
+#   - hostname: mac.opencode.madebysoupy.dev
+#     service: http://localhost:4096
+# If it says mac.madebysoupy.dev, fix it to mac.opencode.madebysoupy.dev, then
+# reload the tunnel (Step 4). If it already says mac.opencode, skip to Step 5.
+
+
+## STEP 4 — Reload tunnel only if config was changed in Step 3
+
+launchctl unload ~/Library/LaunchAgents/com.cloudflare.tunnel.opencode.plist
+launchctl load   ~/Library/LaunchAgents/com.cloudflare.tunnel.opencode.plist
+sleep 5
+launchctl list com.cloudflare.tunnel.opencode
+
+
+## STEP 5 — Verify end-to-end
+
+curl -s http://localhost:4096/global/health
+# Expected: {"healthy":true,...}
+
+curl -sv https://mac.opencode.madebysoupy.dev/global/health 2>&1 | head -30
+# Expected: HTTP 200 with {"healthy":true,...}
+# A 526/SSL error means DNS hasn't propagated yet — wait a minute and retry.
+# A connection refused means the tunnel ingress hostname is still wrong.
+
+
+## STEP 6 — Report back
+
+# Update this file with status. Example:
+# DONE 2026-05-23: Wrong DNS record deleted. Config had correct hostname already.
+# curl mac.opencode.madebysoupy.dev/global/health → 200 {"healthy":true}
 # Sent from: Windows (opencode-manager)
 # Date: 2026-05-23
 #

@@ -22,4 +22,6 @@
 #              launchctl load   ~/Library/LaunchAgents/com.cloudflare.tunnel.opencode.plist
 #
 # DNS: mac.opencode.madebysoupy.dev → 7ee20289-1222-4023-89af-d3b688005abb.cfargotunnel.com (proxied)
+# Auth: None (Cloudflare Access incompatible with cross-origin fetch from opencode.madebysoupy.dev)
+#       Set OPENCODE_SERVER_PASSWORD on Mac if you want basic-auth protection.
 # CORS: opencode launched with --cors https://opencode.madebysoupy.dev (set in opencode-manager plist)
