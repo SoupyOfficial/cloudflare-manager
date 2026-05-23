@@ -37,4 +37,4 @@ notes:
   - "Mac Mini only — runs both Ollama (llm.) and OpenCode (mac.opencode.)"
   - "OpenCode on Windows uses a separate tunnel (475f52fb) for opencode.madebysoupy.dev"
   - "mac.opencode. CORS: opencode service launches with --cors https://opencode.madebysoupy.dev (see opencode-manager)"
-  - "To activate mac.opencode. ingress, update ~/.cloudflared/config.yml on Mac and reload the tunnel"
+  - "mac.opencode.madebysoupy.dev is active via the ollama-home tunnel and local cloudflared config"

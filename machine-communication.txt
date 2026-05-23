@@ -74,5 +74,23 @@ curl -s https://mac.opencode.madebysoupy.dev/global/health
 # After completing the above, update this file with a brief status summary
 # so Windows can confirm the setup is complete. Example:
 #
-#   DONE 2026-05-23: Steps 1-4 complete. curl localhost:4096/global/health OK.
-#   Tunnel ingress active. mac.opencode.madebysoupy.dev returns CF Access page.
+# DONE 2026-05-23: Steps 1-4 complete.
+#
+# Step 1 — launchd plists reinstalled. com.opencode.service running (PID 5306).
+#           com.cloudflare.tunnel.opencode running (PID 5425).
+#
+# Step 2 — ~/.cloudflared/config.yml updated. Both ingress rules present:
+#             llm.madebysoupy.dev       → http://localhost:11434
+#             mac.opencode.madebysoupy.dev → http://localhost:4096
+#           Catch-all (http_status:404) remains last.
+#
+# Step 3 — Tunnel reloaded. 4 QUIC connections registered to Cloudflare edge
+#           (mia01/mia05/mia07/mia01). Tunnel ID: 7ee20289-1222-4023-89af-d3b688005abb.
+#
+# Step 4 — curl http://localhost:4096/global/health → {"healthy":true,"version":"1.15.7"}
+#           DNS CNAME created: mac.opencode.madebysoupy.dev →
+#             7ee20289-1222-4023-89af-d3b688005abb.cfargotunnel.com (proxied)
+#           Resolves via Cloudflare (1.1.1.1): 172.67.220.204 / 104.21.17.40
+#           Cloudflare Access policy active (email auth) — Access challenge page expected.
+#
+# cloudflared version: 2026.5.0  |  opencode version: 1.15.7
