@@ -1,0 +1,9 @@
+jcampbell@Jacobs-Mac-mini opencode-manager % cloudflared tunnel info o
+pencode-origin
+NAME:     ollama-home
+ID:       7ee20289-1222-4023-89af-d3b688005abb
+CREATED:  2026-04-28 22:14:43.781924 +0000 UTC
+
+CONNECTOR ID                         CREATED              ARCHITECTURE VERSION  ORIGIN IP      EDGE             
+3c0c92fb-3274-43d4-986d-188c0b046d88 2026-05-08T23:39:55Z darwin_arm64 2026.3.0 72.189.234.178 1xmia02, 1xmia07 
+93093b32-b085-47f9-afa5-006718f08872 2026-05-23T17:48:08Z darwin_arm64 2026.5.0 72.189.234.178 2xmia01, 2xmia08 
