@@ -11,6 +11,7 @@
     "deploy:test:site-auth": "cd workers/site-auth && wrangler deploy --env test",
     "deploy:test:llm-proxy": "cd workers/llm-proxy && wrangler deploy --env test",
     "deploy:test:telemetry": "cd workers/telemetry && wrangler deploy --env test",
+    "secrets:copy-to-test": "pwsh scripts/copy-secrets-to-test.ps1",
     "dev:site-auth": "cd workers/site-auth && wrangler dev",
     "dev:llm-proxy": "cd workers/llm-proxy && wrangler dev",
     "dev:telemetry": "cd workers/telemetry && wrangler dev",
