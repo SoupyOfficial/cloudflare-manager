@@ -35,5 +35,24 @@
       "worker_protection": "plot-generator-site-auth",
       "notes": "Protected by custom Worker auth (site-auth), NOT by Access email challenge. Remove any Access policies for this hostname."
     }
+    {
+      "name": "OpenCode IDE (Mac)",
+      "domain": "mac.opencode.madebysoupy.dev",
+      "type": "self_hosted",
+      "session_duration": "12h",
+      "policies": [
+        {
+          "name": "Allow authenticated users",
+          "action": "allow",
+          "include": [
+            {
+              "type": "email",
+              "emails": ["jcampbell@example.com"]
+            }
+          ]
+        }
+      ],
+      "notes": "Mac Mini OpenCode instance. Direct tunnel — no site-auth worker. Protected by Cloudflare Access email auth."
+    }
   ]
 }

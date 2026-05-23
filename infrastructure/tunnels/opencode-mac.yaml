@@ -1,0 +1,34 @@
+# Tunnel: opencode-origin (Mac Mini)
+# Purpose: Exposes OpenCode web UI running on Mac Mini
+# Public hostname: mac.opencode.madebysoupy.dev
+# Auth: Cloudflare Access (email policy) — no site-auth worker
+#
+# Get UUID:  cloudflared tunnel info opencode-origin   (run on Mac)
+# DNS:       mac.madebysoupy.dev → <UUID>.cfargotunnel.com (proxied)
+# Note:      The tunnel name "opencode-origin" is reused on Mac but has a DIFFERENT
+#            UUID from the Windows tunnel (475f52fb). Each cloudflared install creates
+#            its own credentials file even if the tunnel names match.
+
+tunnel:
+  name: opencode-origin
+  id: "<MAC-TUNNEL-UUID>"    # Fill in: cloudflared tunnel info opencode-origin (on Mac)
+  credentials_file_ref: "~/.cloudflared/<MAC-TUNNEL-UUID>.json"
+  machine: mac-mini
+
+ingress:
+  - hostname: mac.opencode.madebysoupy.dev
+    service: http://localhost:4096
+    origin_request:
+      connectTimeout: 30s
+      tlsTimeout: 30s
+      tcpKeepAlive: 30s
+      keepAliveTimeout: 90s
+      httpHostHeader: localhost:4096
+
+  - service: http_status:404
+
+notes:
+  - "Mac Mini only — do NOT run on Windows (Windows uses tunnel 475f52fb for opencode.madebysoupy.dev)"
+  - "CORS: opencode service is launched with --cors https://opencode.madebysoupy.dev (see opencode-manager)"
+  - "After filling UUID, run: npm run sync:dns  to create the DNS CNAME"
+  - "Then sync Access: npm run sync:access"

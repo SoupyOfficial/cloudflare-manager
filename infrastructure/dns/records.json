@@ -39,6 +39,13 @@
       "comment": "Direct WebSocket tunnel endpoint for OpenCode — used by site-auth Worker for WS upgrades"
     },
     {
+      "name": "mac",
+      "type": "CNAME",
+      "content": "<MAC-TUNNEL-UUID>.cfargotunnel.com",
+      "proxied": true,
+      "comment": "OpenCode IDE on Mac Mini — direct tunnel, protected by Cloudflare Access. Fill UUID from: cloudflared tunnel info opencode-origin (run on Mac)"
+    },
+    {
       "name": "llm",
       "type": "CNAME",
       "content": "7ee20289-1222-4023-89af-d3b688005abb.cfargotunnel.com",
