@@ -9,8 +9,22 @@
 # so that Windows tool paths containing spaces (Program Files) don't need
 # shell-escaping gymnastics. Each export statement extends PATH incrementally.
 
-$port    = 4096
+$port = 4096
 $wslUser = "soupy"
+
+# ── Load credentials from .env ────────────────────────────────────────────────
+# Scheduled tasks don't reliably inherit User-level env vars set after the task
+# session started. Reading from .env at runtime is the only reliable source.
+$envFile = Join-Path $PSScriptRoot '..\\.env'
+$serverPassword = ''
+$serverUsername = 'opencode'
+if (Test-Path $envFile) {
+    Get-Content $envFile | Where-Object { $_ -match '^OPENCODE_SERVER_(PASSWORD|USERNAME)=' } | ForEach-Object {
+        $k, $v = $_ -split '=', 2
+        if ($k -eq 'OPENCODE_SERVER_PASSWORD') { $serverPassword = $v.Trim() }
+        if ($k -eq 'OPENCODE_SERVER_USERNAME') { $serverUsername = $v.Trim() }
+    }
+}
 
 # Windows dev tools exposed to WSL via /mnt/c mount.
 # Paths with spaces are safe here — they're inside a bash here-doc, not a -c string.
@@ -41,15 +55,9 @@ export PATH="/mnt/c/Program Files/Go/bin:\$PATH"
 export PATH="/mnt/c/Python311:/mnt/c/Python311/Scripts:\$PATH"
 
 # ── OpenCode server auth ────────────────────────────────────────────────────
-# OPENCODE_SERVER_PASSWORD: set in the Windows environment (User or System)
-# to enable basic auth protection on the server. If unset, server is open.
-# OPENCODE_SERVER_USERNAME: defaults to 'opencode' if not overridden.
-if [ -n '${env:OPENCODE_SERVER_PASSWORD}' ]; then
-  export OPENCODE_SERVER_PASSWORD='${env:OPENCODE_SERVER_PASSWORD}'
-fi
-if [ -n '${env:OPENCODE_SERVER_USERNAME}' ]; then
-  export OPENCODE_SERVER_USERNAME='${env:OPENCODE_SERVER_USERNAME}'
-fi
+# Values loaded from .env above; injected into the WSL process at launch time.
+$(if ($serverPassword) { "export OPENCODE_SERVER_PASSWORD='$serverPassword'" })
+$(if ($serverUsername -and $serverUsername -ne 'opencode') { "export OPENCODE_SERVER_USERNAME='$serverUsername'" })
 
 # Port/hostname/cors are set via ~/.config/opencode/opencode.jsonc (server block).
 # Do not duplicate them here — the config file is the single source of truth.

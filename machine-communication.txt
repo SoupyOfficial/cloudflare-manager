@@ -12,19 +12,46 @@
 # Clear the task content when done — keep only this header.
 # ─────────────────────────────────────────────────────────────────────────────
 
-# AGENT TASK — Mac: add opencode-windows CORS origin and reinstall plist
+# AGENT TASK — Mac: enable OpenCode server auth (reinstall plist with credentials)
 # Sent from: Windows
-# Date: 2026-05-29
+# Date: 2026-05-28
 #
 # Context:
-# - A new fixed Windows URL has been added: https://opencode-windows.madebysoupy.dev
-# - This allows the OpenCode web UI "See Servers" feature to reach both machines
-#   at separate stable URLs from a single browser session.
-# - The Mac opencode service plist template was updated to include a second --cors
-#   flag for the new Windows origin. The installed plist on Mac still has only the
-#   old single --cors value and must be reinstalled.
-# - opencode-manager plist template: config/macos/com.opencode.service.plist
-# - Install script: scripts/restart-opencode.sh --install
+# - Windows OpenCode is now protected with basic auth (OPENCODE_SERVER_PASSWORD).
+# - The Mac plist template has been updated to support the same auth via placeholder
+#   substitution in restart-opencode.sh --install.
+# - This task reinstalls the Mac launchd service with the credentials.
+#
+# Steps:
+#
+# 1. Pull latest from both repos:
+#      cd ~/Documents/Development/opencode-manager && git pull
+#      cd ~/Documents/Development/cloudflare-manager && git pull
+#
+# 2. Reinstall the Mac launchd plist with auth credentials.
+#    Run from ~/Documents/Development/opencode-manager:
+#      OPENCODE_SERVER_PASSWORD=Achieve21! OPENCODE_SERVER_USERNAME=jcampbell \
+#        bash scripts/restart-opencode.sh --install
+#
+# 3. Verify service is healthy (no auth yet — opencode may not enforce it on Mac until
+#    the plist is active):
+#      curl -s http://localhost:4096/global/health
+#    Expected: {"healthy":true,...}
+#
+# 4. Verify auth is enforced (no credentials → 401):
+#      curl -s -o /dev/null -w "%{http_code}" http://localhost:4096/global/health
+#    Expected: 401
+#
+# 5. Verify auth works with credentials:
+#      curl -s -u jcampbell:Achieve21! http://localhost:4096/global/health
+#    Expected: {"healthy":true,...}
+#
+# 6. Verify public URL still routes correctly:
+#      curl -sI https://opencode-mac.madebysoupy.dev/site.webmanifest | head -3
+#    Expected: HTTP/2 200 (or redirect to login)
+#
+# 7. Report results back in this file, commit + push to cloudflare-manager main.
+
 
 ## STEP 1 — Pull latest changes
 
