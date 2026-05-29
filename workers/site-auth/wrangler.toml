@@ -40,7 +40,7 @@ zone_name = "madebysoupy.dev"
 # OPENCODE_MAC_WS_UPSTREAM_URL (default: https://opencode-mac.madebysoupy.dev/)
 
 [vars]
-OPENCODE_DEFAULT_INSTANCE = "mac"
+OPENCODE_DEFAULT_INSTANCE = "windows"
 
 # ─── Test Environment ─────────────────────────────────────────────────────────
 [env.test]
