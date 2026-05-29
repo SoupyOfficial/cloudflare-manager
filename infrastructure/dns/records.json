@@ -27,14 +27,14 @@
     {
       "name": "opencode-origin",
       "type": "CNAME",
-      "content": "475f52fb-60a2-4177-b193-617fdc703e4e.cfargotunnel.com",
+      "content": "9f197cb0-d197-4c7e-bed6-ddc2859336f3.cfargotunnel.com",
       "proxied": false,
       "comment": "Cloudflare Tunnel origin for OpenCode (internal, not directly accessible)"
     },
     {
       "name": "opencode-ws",
       "type": "CNAME",
-      "content": "475f52fb-60a2-4177-b193-617fdc703e4e.cfargotunnel.com",
+      "content": "9f197cb0-d197-4c7e-bed6-ddc2859336f3.cfargotunnel.com",
       "proxied": true,
       "comment": "Direct WebSocket tunnel endpoint for OpenCode — used by site-auth Worker for WS upgrades"
     },
