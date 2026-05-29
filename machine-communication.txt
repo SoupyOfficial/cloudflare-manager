@@ -73,6 +73,11 @@ curl -sI https://opencode-mac.madebysoupy.dev/site.webmanifest | head -5
 # Step 2 — reinstall + reload: OK; health -> {"healthy":true,...}
 # Step 3 — CORS from opencode.madebysoupy.dev: 204; from opencode-windows.*: 204
 # Step 4 — opencode-mac.madebysoupy.dev/site.webmanifest -> HTTP 200
+
+# DONE 2026-05-29: Mac plist reinstalled with opencode-windows CORS origin.
+# Step 2 — reinstall + reload: OK; health -> {"healthy":true,"version":"1.15.7"}
+# Step 3 — CORS from opencode.madebysoupy.dev: 204; from opencode-windows.*: 204
+# Step 4 — opencode-mac.madebysoupy.dev/site.webmanifest -> HTTP 200
 #
 # Context:
 # - opencode.madebysoupy.dev is now routed by site-auth Worker with instance selection:
