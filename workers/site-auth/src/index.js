@@ -19,6 +19,8 @@
  * - OPENCODE_WINDOWS_WS_UPSTREAM_URL (default: https://opencode-ws.madebysoupy.dev/)
  * - OPENCODE_MAC_UPSTREAM_URL (default: https://opencode-mac.madebysoupy.dev/)
  * - OPENCODE_MAC_WS_UPSTREAM_URL (default: https://opencode-mac.madebysoupy.dev/)
+ * - OPENCODE_SERVER_USERNAME (username for opencode server basic auth)
+ * - OPENCODE_SERVER_PASSWORD (password for opencode server basic auth)
  *
  * Multi-instance architecture:
  * - opencode.madebysoupy.dev          → smart redirect to per-machine URL (cookie/default)
@@ -238,10 +240,14 @@ export default {
       }
       const wsTargetUrl = buildTargetUrl(opencodeUpstreams.wsBase, requestUrlForUpstream)
       const wsRequest = new Request(wsTargetUrl.toString(), request)
-      wsRequest.headers.set(
-        'Authorization',
-        `Basic ${btoa(`${expectedUser}:${expectedPass}`)}`,
-      )
+      const opencodeServerUser = env.OPENCODE_SERVER_USERNAME || 'jcampbell'
+      const opencodeServerPass = env.OPENCODE_SERVER_PASSWORD || ''
+      if (opencodeServerPass) {
+        wsRequest.headers.set(
+          'Authorization',
+          `Basic ${btoa(`${opencodeServerUser}:${opencodeServerPass}`)}`,
+        )
+      }
       const wsResponse = await fetch(wsRequest)
       return withOpencodeInstanceResponseHeaders(
         wsResponse,
@@ -258,12 +264,17 @@ export default {
     const proxiedRequest = new Request(targetUrl.toString(), request)
     if (isAnyOpencodeHost) {
       // The OpenCode origin requires HTTP Basic auth. The browser authenticates
-      // via the pg_auth session cookie, so we inject the upstream credentials
+      // via the pg_auth session cookie, so we inject the opencode server credentials
       // here to satisfy the origin server regardless of how the browser authed.
-      proxiedRequest.headers.set(
-        'Authorization',
-        `Basic ${btoa(`${expectedUser}:${expectedPass}`)}`,
-      )
+      // These are separate from the Worker gateway credentials (BASIC_AUTH_*).
+      const opencodeServerUser = env.OPENCODE_SERVER_USERNAME || 'jcampbell'
+      const opencodeServerPass = env.OPENCODE_SERVER_PASSWORD || ''
+      if (opencodeServerPass) {
+        proxiedRequest.headers.set(
+          'Authorization',
+          `Basic ${btoa(`${opencodeServerUser}:${opencodeServerPass}`)}`,
+        )
+      }
     }
     const upstreamResponse = await fetch(proxiedRequest, { redirect: 'manual' })
 
