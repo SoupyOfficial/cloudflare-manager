@@ -25,6 +25,13 @@
       "comment": "OpenCode IDE, protected by site-auth worker. Origin: opencode-origin.madebysoupy.dev"
     },
     {
+      "name": "opencode-windows",
+      "type": "AAAA",
+      "content": "100::",
+      "proxied": true,
+      "comment": "OpenCode Windows fixed URL via site-auth. Enables See Servers cross-origin."
+    },
+    {
       "name": "opencode-origin",
       "type": "CNAME",
       "content": "9f197cb0-d197-4c7e-bed6-ddc2859336f3.cfargotunnel.com",
@@ -43,14 +50,14 @@
       "type": "CNAME",
       "content": "7ee20289-1222-4023-89af-d3b688005abb.cfargotunnel.com",
       "proxied": true,
-      "comment": "OpenCode IDE on Mac Mini (preferred hostname) — served by ollama-home tunnel. No Access policy (cross-origin fetch incompatible with Access cookies)."
+      "comment": "OpenCode Mac Mini (preferred) via ollama-home tunnel. No Access policy."
     },
     {
       "name": "mac.opencode",
       "type": "CNAME",
       "content": "7ee20289-1222-4023-89af-d3b688005abb.cfargotunnel.com",
       "proxied": true,
-      "comment": "OpenCode IDE on Mac Mini (legacy alias) — served by ollama-home tunnel. No Access policy (cross-origin fetch incompatible with Access cookies)."
+      "comment": "OpenCode Mac Mini (legacy alias) via ollama-home tunnel. No Access policy."
     },
     {
       "name": "llm",

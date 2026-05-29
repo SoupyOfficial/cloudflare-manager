@@ -19,6 +19,16 @@
  * - OPENCODE_WINDOWS_WS_UPSTREAM_URL (default: https://opencode-ws.madebysoupy.dev/)
  * - OPENCODE_MAC_UPSTREAM_URL (default: https://opencode-mac.madebysoupy.dev/)
  * - OPENCODE_MAC_WS_UPSTREAM_URL (default: https://opencode-mac.madebysoupy.dev/)
+ *
+ * Multi-instance architecture:
+ * - opencode.madebysoupy.dev   → default instance (cookie/query-param selectable)
+ * - opencode-windows.madebysoupy.dev → always Windows (fixed)
+ * - opencode-mac.madebysoupy.dev     → always Mac (fixed, tunnel-direct)
+ *
+ * The fixed per-machine URLs allow the OpenCode web UI "See Servers" feature to
+ * reach both instances independently from the same browser session. Each fixed
+ * host adds CORS headers so cross-origin API calls from opencode.madebysoupy.dev
+ * are accepted.
  */
 
 const DEFAULT_UPSTREAM_URL = 'https://soupyofficial.github.io/plot_generator/'
@@ -30,6 +40,17 @@ const APPS_BASE_PATH = '/plot_generator'
 const DEFAULT_APPS_HOST = 'apps.madebysoupy.dev'
 const DEFAULT_PLOTS_HOST = 'plots.madebysoupy.dev'
 const DEFAULT_OPENCODE_HOST = 'opencode.madebysoupy.dev'
+const DEFAULT_OPENCODE_WINDOWS_HOST = 'opencode-windows.madebysoupy.dev'
+// opencode-mac.madebysoupy.dev is served directly by the Cloudflare tunnel (not this worker)
+// but we list it here as the canonical Mac URL for CORS allow-list purposes.
+const OPENCODE_MAC_PUBLIC_HOST = 'opencode-mac.madebysoupy.dev'
+// Origins that are permitted to make cross-origin API calls to any opencode instance
+// served by this worker. Kept as a Set for O(1) lookup.
+const OPENCODE_CORS_ALLOWED_ORIGINS = new Set([
+  'https://opencode.madebysoupy.dev',
+  'https://opencode-windows.madebysoupy.dev',
+  'https://opencode-mac.madebysoupy.dev',
+])
 const REALM = 'Plot Generator'
 const SESSION_COOKIE_NAME = 'pg_auth'
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 12
@@ -47,29 +68,45 @@ const DEFAULT_OPENCODE_MAC_WS_UPSTREAM_URL = 'https://opencode-mac.madebysoupy.d
 
 export default {
   async fetch(request, env) {
-    if (request.method === 'OPTIONS') {
-      return new Response(null, { status: 204 })
-    }
-
     const APPS_HOST = env.APPS_HOST || DEFAULT_APPS_HOST
     const PLOTS_HOST = env.PLOTS_HOST || DEFAULT_PLOTS_HOST
     const OPENCODE_HOST = env.OPENCODE_HOST || DEFAULT_OPENCODE_HOST
 
     const incomingUrl = new URL(request.url)
     const requestCookies = parseCookies(request.headers.get('Cookie'))
+    const OPENCODE_WINDOWS_HOST = env.OPENCODE_WINDOWS_HOST || DEFAULT_OPENCODE_WINDOWS_HOST
+
     const isAppsHost = incomingUrl.hostname === APPS_HOST
     const isPlotsHost = incomingUrl.hostname === PLOTS_HOST
     const isOpencodeHost = incomingUrl.hostname === OPENCODE_HOST
+    // Fixed per-machine host: always routes to Windows regardless of cookie/query param
+    const isOpencodeWindowsHost = incomingUrl.hostname === OPENCODE_WINDOWS_HOST
+    const isAnyOpencodeHost = isOpencodeHost || isOpencodeWindowsHost
 
-    const opencodeInstance = isOpencodeHost
-      ? selectOpencodeInstance(incomingUrl, requestCookies, env)
-      : DEFAULT_OPENCODE_INSTANCE
-    const requestUrlForUpstream = isOpencodeHost
+    const opencodeInstance = isOpencodeWindowsHost
+      ? OPENCODE_INSTANCE_WINDOWS
+      : isOpencodeHost
+        ? selectOpencodeInstance(incomingUrl, requestCookies, env)
+        : DEFAULT_OPENCODE_INSTANCE
+    const requestUrlForUpstream = isAnyOpencodeHost
       ? stripOpencodeInstanceParam(incomingUrl)
       : incomingUrl
-    const opencodeUpstreams = isOpencodeHost
+    const opencodeUpstreams = isAnyOpencodeHost
       ? getOpencodeUpstreams(env, opencodeInstance)
       : null
+
+    // CORS: allow cross-origin API requests between the known opencode hostnames so the
+    // OpenCode web UI "See Servers" feature can reach both instances from one browser session.
+    const requestOrigin = request.headers.get('Origin')
+    const isCrossOriginOpencodeRequest =
+      isAnyOpencodeHost && requestOrigin && OPENCODE_CORS_ALLOWED_ORIGINS.has(requestOrigin)
+
+    if (request.method === 'OPTIONS' && isCrossOriginOpencodeRequest) {
+      return new Response(null, {
+        status: 204,
+        headers: buildCorsHeaders(requestOrigin),
+      })
+    }
 
     const expectedUser = env.BASIC_AUTH_USERNAME
     const expectedPass = env.BASIC_AUTH_PASSWORD
@@ -87,20 +124,25 @@ export default {
     const isAllowed = isBasicAllowed || hasValidSession
 
     if (!isAllowed) {
-      if (isOpencodeHost && isOpencodePublicAssetRequest(request, incomingUrl)) {
+      if (isAnyOpencodeHost && isOpencodePublicAssetRequest(request, incomingUrl)) {
         const publicAssetUrl = buildTargetUrl(
           opencodeUpstreams.httpBase,
           requestUrlForUpstream,
         )
         const publicAssetRequest = new Request(publicAssetUrl.toString(), request)
         const publicAssetResponse = await fetch(publicAssetRequest, { redirect: 'manual' })
-        return withOpencodeInstanceResponseHeaders(publicAssetResponse, opencodeInstance, false)
+        return withOpencodeInstanceResponseHeaders(
+          publicAssetResponse,
+          opencodeInstance,
+          false,
+          isCrossOriginOpencodeRequest ? requestOrigin : null,
+        )
       }
 
       // Top-level document requests to apps/opencode are redirected to plots.*
       // before any content loads. Non-document requests return 401 so assets
       // do not cross-origin redirect to the login host (which causes CSP noise).
-      if (isAppsHost || isOpencodeHost) {
+      if (isAppsHost || isAnyOpencodeHost) {
         if (isDocumentNavigationRequest(request)) {
           const loginUrl = buildLoginRedirectUrl(env.LOGIN_URL || DEFAULT_LOGIN_URL, incomingUrl)
           return new Response(null, {
@@ -156,7 +198,7 @@ export default {
       })
     }
 
-    const upstreamBase = isOpencodeHost
+    const upstreamBase = isAnyOpencodeHost
       ? opencodeUpstreams.httpBase
       : (env.UPSTREAM_URL || DEFAULT_UPSTREAM_URL)
 
@@ -166,7 +208,7 @@ export default {
     // Do NOT pass redirect:'manual' for WebSocket — the runtime pipes the connection.
     const isWebSocketUpgrade = request.headers.get('Upgrade') === 'websocket'
     if (isWebSocketUpgrade) {
-      if (!isOpencodeHost) {
+      if (!isAnyOpencodeHost) {
         return new Response('WebSocket not supported on this host', {
           status: 502,
           headers: { 'Content-Type': 'text/plain' },
@@ -179,7 +221,12 @@ export default {
         `Basic ${btoa(`${expectedUser}:${expectedPass}`)}`,
       )
       const wsResponse = await fetch(wsRequest)
-      return withOpencodeInstanceResponseHeaders(wsResponse, opencodeInstance, isOpencodeHost)
+      return withOpencodeInstanceResponseHeaders(
+        wsResponse,
+        opencodeInstance,
+        isOpencodeHost,
+        isCrossOriginOpencodeRequest ? requestOrigin : null,
+      )
     }
 
     const targetUrl = buildTargetUrl(upstreamBase, requestUrlForUpstream, {
@@ -187,7 +234,7 @@ export default {
     })
 
     const proxiedRequest = new Request(targetUrl.toString(), request)
-    if (isOpencodeHost) {
+    if (isAnyOpencodeHost) {
       // The OpenCode origin requires HTTP Basic auth. The browser authenticates
       // via the pg_auth session cookie, so we inject the upstream credentials
       // here to satisfy the origin server regardless of how the browser authed.
@@ -209,7 +256,7 @@ export default {
       responseHeaders.set('Location', rewritten)
     }
 
-    if (isOpencodeHost) {
+    if (isAnyOpencodeHost) {
       patchOpencodeResponseCsp(responseHeaders)
     }
 
@@ -217,9 +264,19 @@ export default {
       responseHeaders.append('Set-Cookie', await buildSessionCookie(expectedUser, expectedPass))
     }
 
-    if (isOpencodeHost) {
+    if (isAnyOpencodeHost) {
       responseHeaders.set('X-Opencode-Instance', opencodeInstance)
-      responseHeaders.append('Set-Cookie', buildOpencodeInstanceCookie(opencodeInstance))
+      // Only set the instance-switching cookie on the shared opencode.* host.
+      // The fixed per-machine hosts (opencode-windows.*) should not clobber the
+      // shared-host cookie that the instance selector relies on.
+      if (isOpencodeHost) {
+        responseHeaders.append('Set-Cookie', buildOpencodeInstanceCookie(opencodeInstance))
+      }
+      if (isCrossOriginOpencodeRequest) {
+        for (const [k, v] of Object.entries(buildCorsHeaders(requestOrigin))) {
+          responseHeaders.set(k, v)
+        }
+      }
     }
 
     return new Response(upstreamResponse.body, {
@@ -410,11 +467,36 @@ function buildOpencodeInstanceCookie(instance) {
   return `${OPENCODE_INSTANCE_COOKIE_NAME}=${instance}; Max-Age=${OPENCODE_INSTANCE_MAX_AGE_SECONDS}; Domain=.madebysoupy.dev; Path=/; HttpOnly; Secure; SameSite=Lax`
 }
 
-async function withOpencodeInstanceResponseHeaders(response, opencodeInstance, shouldSetCookie) {
+// Returns headers that satisfy CORS preflight and simple requests for cross-origin
+// calls between opencode instances (e.g. the browser at opencode.* fetching the API
+// of opencode-windows.* to populate the "See Servers" list).
+// Credentials (session cookie) must be allowed so the auth check passes.
+function buildCorsHeaders(origin) {
+  return {
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Credentials': 'true',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Authorization, Content-Type, Accept',
+    'Access-Control-Expose-Headers': 'X-Opencode-Instance',
+    'Vary': 'Origin',
+  }
+}
+
+async function withOpencodeInstanceResponseHeaders(
+  response,
+  opencodeInstance,
+  shouldSetCookie,
+  corsOrigin = null,
+) {
   const headers = new Headers(response.headers)
   headers.set('X-Opencode-Instance', opencodeInstance)
   if (shouldSetCookie) {
     headers.append('Set-Cookie', buildOpencodeInstanceCookie(opencodeInstance))
+  }
+  if (corsOrigin) {
+    for (const [k, v] of Object.entries(buildCorsHeaders(corsOrigin))) {
+      headers.set(k, v)
+    }
   }
 
   return new Response(response.body, {
