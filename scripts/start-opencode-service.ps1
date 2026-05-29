@@ -40,7 +40,20 @@ export PATH="/mnt/c/Program Files/Go/bin:\$PATH"
 # Python  (C:\Python311)
 export PATH="/mnt/c/Python311:/mnt/c/Python311/Scripts:\$PATH"
 
-exec opencode web --hostname 0.0.0.0 --port $port
+# ── OpenCode server auth ────────────────────────────────────────────────────
+# OPENCODE_SERVER_PASSWORD: set in the Windows environment (User or System)
+# to enable basic auth protection on the server. If unset, server is open.
+# OPENCODE_SERVER_USERNAME: defaults to 'opencode' if not overridden.
+if [ -n '${env:OPENCODE_SERVER_PASSWORD}' ]; then
+  export OPENCODE_SERVER_PASSWORD='${env:OPENCODE_SERVER_PASSWORD}'
+fi
+if [ -n '${env:OPENCODE_SERVER_USERNAME}' ]; then
+  export OPENCODE_SERVER_USERNAME='${env:OPENCODE_SERVER_USERNAME}'
+fi
+
+# Port/hostname/cors are set via ~/.config/opencode/opencode.jsonc (server block).
+# Do not duplicate them here — the config file is the single source of truth.
+exec opencode web
 "@
 
 while ($true) {
