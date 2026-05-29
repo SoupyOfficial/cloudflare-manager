@@ -21,14 +21,15 @@
  * - OPENCODE_MAC_WS_UPSTREAM_URL (default: https://opencode-mac.madebysoupy.dev/)
  *
  * Multi-instance architecture:
- * - opencode.madebysoupy.dev   → default instance (cookie/query-param selectable)
- * - opencode-windows.madebysoupy.dev → always Windows (fixed)
- * - opencode-mac.madebysoupy.dev     → always Mac (fixed, tunnel-direct)
+ * - opencode.madebysoupy.dev          → smart redirect to per-machine URL (cookie/default)
+ * - opencode-windows.madebysoupy.dev  → always Windows (proxied via this Worker)
+ * - opencode-mac.madebysoupy.dev      → always Mac (tunnel-direct, own auth)
  *
- * The fixed per-machine URLs allow the OpenCode web UI "See Servers" feature to
- * reach both instances independently from the same browser session. Each fixed
- * host adds CORS headers so cross-origin API calls from opencode.madebysoupy.dev
- * are accepted.
+ * opencode.madebysoupy.dev redirects rather than proxies. Proxying through a
+ * shared URL caused SSE / WebSocket connection glitches in the OpenCode web UI
+ * because long-lived streams were unstable behind the instance-switching proxy.
+ * Redirecting to a fixed per-machine URL gives the browser a stable connection.
+ * "See Servers" works by adding the other machine's fixed URL as a second server.
  */
 
 const DEFAULT_UPSTREAM_URL = 'https://soupyofficial.github.io/plot_generator/'
@@ -196,6 +197,27 @@ export default {
         status: 302,
         headers: redirectHeaders,
       })
+    }
+
+    // Redirect the shared opencode.* URL to the appropriate fixed per-machine URL.
+    // Proxying through this shared host caused SSE stream and WebSocket glitches in
+    // the OpenCode web UI — the fixed per-machine URLs give stable direct connections.
+    if (isOpencodeHost) {
+      const targetHost =
+        opencodeInstance === OPENCODE_INSTANCE_MAC
+          ? (env.OPENCODE_MAC_HOST || OPENCODE_MAC_PUBLIC_HOST)
+          : (env.OPENCODE_WINDOWS_HOST || DEFAULT_OPENCODE_WINDOWS_HOST)
+      const redirectUrl = new URL(requestUrlForUpstream.toString())
+      redirectUrl.hostname = targetHost
+      const redirectHeaders = new Headers({
+        Location: redirectUrl.toString(),
+        'Cache-Control': 'no-store',
+      })
+      if (isBasicAllowed) {
+        redirectHeaders.append('Set-Cookie', await buildSessionCookie(expectedUser, expectedPass))
+      }
+      redirectHeaders.append('Set-Cookie', buildOpencodeInstanceCookie(opencodeInstance))
+      return new Response(null, { status: 302, headers: redirectHeaders })
     }
 
     const upstreamBase = isAnyOpencodeHost
@@ -543,7 +565,13 @@ function isSafeReturnTo(returnTo, appsHost, opencodeHost) {
       return url.pathname.startsWith(APPS_BASE_PATH)
     }
 
-    if (url.hostname === opencodeHost) {
+    // Accept any of the known opencode hostnames (shared + per-machine fixed URLs)
+    const knownOpencodeHosts = new Set([
+      opencodeHost,
+      DEFAULT_OPENCODE_WINDOWS_HOST,
+      OPENCODE_MAC_PUBLIC_HOST,
+    ])
+    if (knownOpencodeHosts.has(url.hostname)) {
       return true
     }
 
