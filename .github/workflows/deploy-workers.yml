@@ -38,32 +38,64 @@ jobs:
         run: npm ci
 
       - name: Deploy site-auth
-        if: ${{ github.event.inputs.worker == 'all' || github.event.inputs.worker == 'site-auth' || github.event_name == 'push' }}
+        if: >
+          github.event_name == 'push' ||
+          github.event.inputs.worker == 'site-auth' ||
+          github.event.inputs.worker == 'all' ||
+          (github.event_name == 'workflow_dispatch' && !github.event.inputs.worker)
         working-directory: workers/site-auth
         run: npx wrangler deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
 
       - name: Deploy llm-proxy
-        if: ${{ github.event.inputs.worker == 'all' || github.event.inputs.worker == 'llm-proxy' || github.event_name == 'push' }}
+        if: >
+          github.event_name == 'push' ||
+          github.event.inputs.worker == 'llm-proxy' ||
+          github.event.inputs.worker == 'all' ||
+          (github.event_name == 'workflow_dispatch' && !github.event.inputs.worker)
         working-directory: workers/llm-proxy
         run: npx wrangler deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
 
       - name: Deploy telemetry
-        if: ${{ github.event.inputs.worker == 'all' || github.event.inputs.worker == 'telemetry' || github.event_name == 'push' }}
+        if: >
+          github.event_name == 'push' ||
+          github.event.inputs.worker == 'telemetry' ||
+          github.event.inputs.worker == 'all' ||
+          (github.event_name == 'workflow_dispatch' && !github.event.inputs.worker)
         working-directory: workers/telemetry
         run: npx wrangler deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
 
       - name: Deployment summary
+        if: always()
         run: |
-          echo "## Worker Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "## Worker Deployment Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Worker | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|--------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| site-auth | ✅ Deployed |" >> $GITHUB_STEP_SUMMARY
-          echo "| llm-proxy | ✅ Deployed |" >> $GITHUB_STEP_SUMMARY
-          echo "| telemetry | ✅ Deployed |" >> $GITHUB_STEP_SUMMARY
+          echo "Trigger: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          if [ -n "${{ github.event.inputs.worker }}" ]; then
+            echo "Requested worker: ${{ github.event.inputs.worker }}" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Worker | Deployed? |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-----------|" >> $GITHUB_STEP_SUMMARY
+          WORKER_INPUT="${{ github.event.inputs.worker }}"
+          EVENT="${{ github.event_name }}"
+          if [ "$EVENT" = 'push' ] || [ -z "$WORKER_INPUT" ] || [ "$WORKER_INPUT" = 'all' ] || [ "$WORKER_INPUT" = 'site-auth' ]; then
+            echo "| site-auth | ✅ |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| site-auth | ⏭ skipped |" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ "$EVENT" = 'push' ] || [ -z "$WORKER_INPUT" ] || [ "$WORKER_INPUT" = 'all' ] || [ "$WORKER_INPUT" = 'llm-proxy' ]; then
+            echo "| llm-proxy | ✅ |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| llm-proxy | ⏭ skipped |" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ "$EVENT" = 'push' ] || [ -z "$WORKER_INPUT" ] || [ "$WORKER_INPUT" = 'all' ] || [ "$WORKER_INPUT" = 'telemetry' ]; then
+            echo "| telemetry | ✅ |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| telemetry | ⏭ skipped |" >> $GITHUB_STEP_SUMMARY
+          fi

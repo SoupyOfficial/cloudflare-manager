@@ -27,13 +27,36 @@ jobs:
 
       - name: Check opencode.madebysoupy.dev
         run: |
+          # Shared entry URL — unauthenticated → 401; follow redirect to per-machine URL
+          status=$(curl -s -o /dev/null -w "%{http_code}" -L \
+            -H "User-Agent: HealthCheckBot/1.0" \
+            https://opencode.madebysoupy.dev/site.webmanifest)
+          if [ "$status" -ge 200 ] && [ "$status" -lt 400 ]; then
+            echo "✅ opencode.madebysoupy.dev (public asset probe) - Status: $status"
+          else
+            echo "⚠️ opencode.madebysoupy.dev - Status: $status"
+          fi
+
+      - name: Check opencode-windows.madebysoupy.dev
+        run: |
           status=$(curl -s -o /dev/null -w "%{http_code}" \
             -H "User-Agent: HealthCheckBot/1.0" \
-            https://opencode.madebysoupy.dev/)
+            https://opencode-windows.madebysoupy.dev/site.webmanifest)
           if [ "$status" -ge 200 ] && [ "$status" -lt 400 ]; then
-            echo "✅ opencode.madebysoupy.dev - Status: $status"
+            echo "✅ opencode-windows.madebysoupy.dev - Status: $status"
           else
-            echo "⚠️ opencode.madebysoupy.dev - Status: $status (may require auth)"
+            echo "⚠️ opencode-windows.madebysoupy.dev - Status: $status (Windows tunnel may be down)"
+          fi
+
+      - name: Check opencode-mac.madebysoupy.dev
+        run: |
+          status=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "User-Agent: HealthCheckBot/1.0" \
+            https://opencode-mac.madebysoupy.dev/site.webmanifest)
+          if [ "$status" -ge 200 ] && [ "$status" -lt 400 ]; then
+            echo "✅ opencode-mac.madebysoupy.dev - Status: $status"
+          else
+            echo "⚠️ opencode-mac.madebysoupy.dev - Status: $status (Mac tunnel may be down)"
           fi
 
       - name: Check telemetry.madebysoupy.dev
@@ -68,6 +91,8 @@ jobs:
           echo "| Endpoint | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| plots.madebysoupy.dev | Checked |" >> $GITHUB_STEP_SUMMARY
-          echo "| opencode.madebysoupy.dev | Checked |" >> $GITHUB_STEP_SUMMARY
+          echo "| opencode.madebysoupy.dev | Checked (public asset probe) |" >> $GITHUB_STEP_SUMMARY
+          echo "| opencode-windows.madebysoupy.dev | Checked |" >> $GITHUB_STEP_SUMMARY
+          echo "| opencode-mac.madebysoupy.dev | Checked |" >> $GITHUB_STEP_SUMMARY
           echo "| telemetry.madebysoupy.dev | Checked |" >> $GITHUB_STEP_SUMMARY
           echo "| llm-api worker | Checked |" >> $GITHUB_STEP_SUMMARY
