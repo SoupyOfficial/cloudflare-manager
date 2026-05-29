@@ -73,9 +73,23 @@ curl -I "https://opencode.madebysoupy.dev/site.webmanifest?instance=mac"
 
 ## STEP 6 — Report back in this file
 
-# Append results in this format:
 # DONE 2026-05-29: Windows shared-instance routing restored.
-# Step 2 — OpenCode Service: Running; Cloudflare Tunnel - opencode-origin: Running.
-# Step 3 — curl localhost:4096/global/health -> ...
-# Step 4 — tunnel info 475f52fb... shows active connectors at ...
-# Step 5 — instance=windows returns HTTP 200 with x-opencode-instance: windows.
+#
+# Step 1 — git pull on cloudflare-manager and opencode-manager: both already up to date.
+#
+# Step 2 — Scheduled tasks:
+#   - OpenCode Service: Running
+#   - Cloudflare Tunnel - opencode-origin: State shows "Ready" (task exits after spawning cloudflared);
+#     cloudflared.exe process confirmed running (PID 4068).
+#   NOTE: Task file referenced tunnel 475f52fb-60a2-4177-b193-617fdc703e4e, but the config file
+#   (~\.cloudflared\opencode-config.yml) uses tunnel 9f197cb0-d197-4c7e-bed6-ddc2859336f3 (named "opencode").
+#
+# Step 3 — curl http://localhost:4096/global/health -> {"healthy":true,"version":"1.15.7"}
+#
+# Step 4 — cloudflared tunnel info 9f197cb0-d197-4c7e-bed6-ddc2859336f3:
+#   Active connector: 3db3b98f-75cd-408c-9e9b-9d21bd31ecdf
+#   Architecture: windows_amd64 v2026.5.0, Origin IP: 72.189.234.178
+#   Edge locations: 2xmia01, 2xmia08
+#
+# Step 5 — instance=windows -> HTTP 200, X-Opencode-Instance: windows ✓
+#           instance=mac    -> HTTP 200, X-Opencode-Instance: mac    ✓
