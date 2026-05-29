@@ -28,6 +28,14 @@ zone_name = "madebysoupy.dev"
 # Optional:
 # LOGIN_URL (default: https://plots.madebysoupy.dev/)
 # UPSTREAM_URL (default: https://soupyofficial.github.io/plot_generator/)
+# OPENCODE_DEFAULT_INSTANCE (windows | mac, default: windows)
+# OPENCODE_WINDOWS_UPSTREAM_URL (default fallback: OPENCODE_UPSTREAM_URL)
+# OPENCODE_WINDOWS_WS_UPSTREAM_URL (default fallback: OPENCODE_WS_UPSTREAM_URL)
+# OPENCODE_MAC_UPSTREAM_URL (default: https://opencode-mac.madebysoupy.dev/)
+# OPENCODE_MAC_WS_UPSTREAM_URL (default: https://opencode-mac.madebysoupy.dev/)
+
+[vars]
+OPENCODE_DEFAULT_INSTANCE = "mac"
 
 # ─── Test Environment ─────────────────────────────────────────────────────────
 [env.test]

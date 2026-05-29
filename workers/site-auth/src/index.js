@@ -14,6 +14,11 @@
  * - LOGIN_URL (default: https://plots.madebysoupy.dev/)
  * - OPENCODE_UPSTREAM_URL (default: https://opencode-origin.madebysoupy.dev/)
  * - OPENCODE_WS_UPSTREAM_URL (default: https://opencode-ws.madebysoupy.dev/)
+ * - OPENCODE_DEFAULT_INSTANCE (windows | mac, default: windows)
+ * - OPENCODE_WINDOWS_UPSTREAM_URL (default: https://opencode-origin.madebysoupy.dev/)
+ * - OPENCODE_WINDOWS_WS_UPSTREAM_URL (default: https://opencode-ws.madebysoupy.dev/)
+ * - OPENCODE_MAC_UPSTREAM_URL (default: https://opencode-mac.madebysoupy.dev/)
+ * - OPENCODE_MAC_WS_UPSTREAM_URL (default: https://opencode-mac.madebysoupy.dev/)
  */
 
 const DEFAULT_UPSTREAM_URL = 'https://soupyofficial.github.io/plot_generator/'
@@ -28,10 +33,17 @@ const DEFAULT_OPENCODE_HOST = 'opencode.madebysoupy.dev'
 const REALM = 'Plot Generator'
 const SESSION_COOKIE_NAME = 'pg_auth'
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 12
+const OPENCODE_INSTANCE_COOKIE_NAME = 'opencode_instance'
+const OPENCODE_INSTANCE_MAX_AGE_SECONDS = 60 * 60 * 24 * 30
+const DEFAULT_OPENCODE_INSTANCE = 'windows'
+const OPENCODE_INSTANCE_WINDOWS = 'windows'
+const OPENCODE_INSTANCE_MAC = 'mac'
 const OPENCODE_PUBLIC_PATHS = new Set(['/site.webmanifest'])
 const CSP_UNSAFE_INLINE = "'unsafe-inline'"
 const CLOUDFLARE_INSIGHTS_SCRIPT_SRC = 'https://static.cloudflareinsights.com'
 const DEFAULT_OPENCODE_WS_UPSTREAM_URL = 'https://opencode-ws.madebysoupy.dev/'
+const DEFAULT_OPENCODE_MAC_UPSTREAM_URL = 'https://opencode-mac.madebysoupy.dev/'
+const DEFAULT_OPENCODE_MAC_WS_UPSTREAM_URL = 'https://opencode-mac.madebysoupy.dev/'
 
 export default {
   async fetch(request, env) {
@@ -44,9 +56,20 @@ export default {
     const OPENCODE_HOST = env.OPENCODE_HOST || DEFAULT_OPENCODE_HOST
 
     const incomingUrl = new URL(request.url)
+    const requestCookies = parseCookies(request.headers.get('Cookie'))
     const isAppsHost = incomingUrl.hostname === APPS_HOST
     const isPlotsHost = incomingUrl.hostname === PLOTS_HOST
     const isOpencodeHost = incomingUrl.hostname === OPENCODE_HOST
+
+    const opencodeInstance = isOpencodeHost
+      ? selectOpencodeInstance(incomingUrl, requestCookies, env)
+      : DEFAULT_OPENCODE_INSTANCE
+    const requestUrlForUpstream = isOpencodeHost
+      ? stripOpencodeInstanceParam(incomingUrl)
+      : incomingUrl
+    const opencodeUpstreams = isOpencodeHost
+      ? getOpencodeUpstreams(env, opencodeInstance)
+      : null
 
     const expectedUser = env.BASIC_AUTH_USERNAME
     const expectedPass = env.BASIC_AUTH_PASSWORD
@@ -66,11 +89,12 @@ export default {
     if (!isAllowed) {
       if (isOpencodeHost && isOpencodePublicAssetRequest(request, incomingUrl)) {
         const publicAssetUrl = buildTargetUrl(
-          env.OPENCODE_UPSTREAM_URL || DEFAULT_OPENCODE_UPSTREAM_URL,
-          incomingUrl,
+          opencodeUpstreams.httpBase,
+          requestUrlForUpstream,
         )
         const publicAssetRequest = new Request(publicAssetUrl.toString(), request)
-        return fetch(publicAssetRequest, { redirect: 'manual' })
+        const publicAssetResponse = await fetch(publicAssetRequest, { redirect: 'manual' })
+        return withOpencodeInstanceResponseHeaders(publicAssetResponse, opencodeInstance, false)
       }
 
       // Top-level document requests to apps/opencode are redirected to plots.*
@@ -133,7 +157,7 @@ export default {
     }
 
     const upstreamBase = isOpencodeHost
-      ? (env.OPENCODE_UPSTREAM_URL || DEFAULT_OPENCODE_UPSTREAM_URL)
+      ? opencodeUpstreams.httpBase
       : (env.UPSTREAM_URL || DEFAULT_UPSTREAM_URL)
 
     // Cloudflare Workers support WebSocket proxying via fetch().
@@ -148,17 +172,17 @@ export default {
           headers: { 'Content-Type': 'text/plain' },
         })
       }
-      const wsUpstreamBase = env.OPENCODE_WS_UPSTREAM_URL || DEFAULT_OPENCODE_WS_UPSTREAM_URL
-      const wsTargetUrl = buildTargetUrl(wsUpstreamBase, incomingUrl)
+      const wsTargetUrl = buildTargetUrl(opencodeUpstreams.wsBase, requestUrlForUpstream)
       const wsRequest = new Request(wsTargetUrl.toString(), request)
       wsRequest.headers.set(
         'Authorization',
         `Basic ${btoa(`${expectedUser}:${expectedPass}`)}`,
       )
-      return fetch(wsRequest)
+      const wsResponse = await fetch(wsRequest)
+      return withOpencodeInstanceResponseHeaders(wsResponse, opencodeInstance, isOpencodeHost)
     }
 
-    const targetUrl = buildTargetUrl(upstreamBase, incomingUrl, {
+    const targetUrl = buildTargetUrl(upstreamBase, requestUrlForUpstream, {
       stripPrefix: isAppsHost ? APPS_BASE_PATH : '',
     })
 
@@ -191,6 +215,11 @@ export default {
 
     if (isBasicAllowed) {
       responseHeaders.append('Set-Cookie', await buildSessionCookie(expectedUser, expectedPass))
+    }
+
+    if (isOpencodeHost) {
+      responseHeaders.set('X-Opencode-Instance', opencodeInstance)
+      responseHeaders.append('Set-Cookie', buildOpencodeInstanceCookie(opencodeInstance))
     }
 
     return new Response(upstreamResponse.body, {
@@ -332,6 +361,67 @@ function buildAppsRedirectUrl(incomingUrl, appsHost) {
   target.hash = incomingUrl.hash
 
   return target.toString()
+}
+
+function normalizeOpencodeInstance(value) {
+  if (!value) return null
+  const normalized = String(value).trim().toLowerCase()
+  if (normalized === OPENCODE_INSTANCE_WINDOWS) return OPENCODE_INSTANCE_WINDOWS
+  if (normalized === OPENCODE_INSTANCE_MAC) return OPENCODE_INSTANCE_MAC
+  return null
+}
+
+function selectOpencodeInstance(incomingUrl, cookies, env) {
+  const explicitInstance = normalizeOpencodeInstance(incomingUrl.searchParams.get('instance'))
+  if (explicitInstance) return explicitInstance
+
+  const cookieInstance = normalizeOpencodeInstance(cookies[OPENCODE_INSTANCE_COOKIE_NAME])
+  if (cookieInstance) return cookieInstance
+
+  const envDefaultInstance = normalizeOpencodeInstance(env.OPENCODE_DEFAULT_INSTANCE)
+  return envDefaultInstance || DEFAULT_OPENCODE_INSTANCE
+}
+
+function stripOpencodeInstanceParam(incomingUrl) {
+  const nextUrl = new URL(incomingUrl.toString())
+  nextUrl.searchParams.delete('instance')
+  return nextUrl
+}
+
+function getOpencodeUpstreams(env, instance) {
+  if (instance === OPENCODE_INSTANCE_MAC) {
+    return {
+      httpBase: env.OPENCODE_MAC_UPSTREAM_URL || DEFAULT_OPENCODE_MAC_UPSTREAM_URL,
+      wsBase: env.OPENCODE_MAC_WS_UPSTREAM_URL || DEFAULT_OPENCODE_MAC_WS_UPSTREAM_URL,
+    }
+  }
+
+  return {
+    httpBase:
+      env.OPENCODE_WINDOWS_UPSTREAM_URL || env.OPENCODE_UPSTREAM_URL || DEFAULT_OPENCODE_UPSTREAM_URL,
+    wsBase:
+      env.OPENCODE_WINDOWS_WS_UPSTREAM_URL ||
+      env.OPENCODE_WS_UPSTREAM_URL ||
+      DEFAULT_OPENCODE_WS_UPSTREAM_URL,
+  }
+}
+
+function buildOpencodeInstanceCookie(instance) {
+  return `${OPENCODE_INSTANCE_COOKIE_NAME}=${instance}; Max-Age=${OPENCODE_INSTANCE_MAX_AGE_SECONDS}; Domain=.madebysoupy.dev; Path=/; HttpOnly; Secure; SameSite=Lax`
+}
+
+async function withOpencodeInstanceResponseHeaders(response, opencodeInstance, shouldSetCookie) {
+  const headers = new Headers(response.headers)
+  headers.set('X-Opencode-Instance', opencodeInstance)
+  if (shouldSetCookie) {
+    headers.append('Set-Cookie', buildOpencodeInstanceCookie(opencodeInstance))
+  }
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  })
 }
 
 async function isSessionAllowed(request, expectedUser, expectedPass) {

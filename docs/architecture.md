@@ -69,9 +69,14 @@ Browser → apps.madebysoupy.dev/plot_generator
 Browser → opencode.madebysoupy.dev
   → Cloudflare Edge
     → site-auth worker (auth check)
-      → opencode-origin.madebysoupy.dev (tunnel)
-        → Local OpenCode server (localhost:4096)
+      → instance router (query/cookie: instance=windows|mac)
+        → Windows: opencode-origin.madebysoupy.dev + opencode-ws.madebysoupy.dev
+        → Mac: opencode-mac.madebysoupy.dev
 ```
+
+Instance selection is sticky via `opencode_instance` cookie. You can force a target instance by opening:
+- `https://opencode.madebysoupy.dev/?instance=windows`
+- `https://opencode.madebysoupy.dev/?instance=mac`
 
 ### LLM API
 
