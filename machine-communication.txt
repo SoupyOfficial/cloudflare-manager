@@ -12,9 +12,67 @@
 # Clear the task content when done — keep only this header.
 # ─────────────────────────────────────────────────────────────────────────────
 
-# AGENT TASK — Windows finalization for shared OpenCode instance routing
-# Sent from: Mac Mini (cloudflare-manager)
+# AGENT TASK — Mac: add opencode-windows CORS origin and reinstall plist
+# Sent from: Windows
 # Date: 2026-05-29
+#
+# Context:
+# - A new fixed Windows URL has been added: https://opencode-windows.madebysoupy.dev
+# - This allows the OpenCode web UI "See Servers" feature to reach both machines
+#   at separate stable URLs from a single browser session.
+# - The Mac opencode service plist template was updated to include a second --cors
+#   flag for the new Windows origin. The installed plist on Mac still has only the
+#   old single --cors value and must be reinstalled.
+# - opencode-manager plist template: config/macos/com.opencode.service.plist
+# - Install script: scripts/restart-opencode.sh --install
+
+## STEP 1 — Pull latest changes
+
+cd ~/Documents/Development/opencode-manager && git pull
+cd ~/Documents/Development/cloudflare-manager && git pull
+
+
+## STEP 2 — Reinstall and reload the OpenCode launchd plist
+
+# This substitutes __HOME__, __OPENCODE_BIN__, etc. and writes the final
+# plist to ~/Library/LaunchAgents/com.opencode.service.plist, then reloads it.
+cd ~/Documents/Development/opencode-manager
+bash scripts/restart-opencode.sh --install
+
+# Quick health check after restart
+sleep 3
+curl -s http://localhost:4096/global/health
+# Expected: {"healthy":true,...}
+
+
+## STEP 3 — Verify the Mac server now accepts CORS from both origins
+
+curl -s -o /dev/null -w "%{http_code}" \
+  -X OPTIONS http://localhost:4096/global/health \
+  -H "Origin: https://opencode.madebysoupy.dev" \
+  -H "Access-Control-Request-Method: GET"
+# Expected: 204
+
+curl -s -o /dev/null -w "%{http_code}" \
+  -X OPTIONS http://localhost:4096/global/health \
+  -H "Origin: https://opencode-windows.madebysoupy.dev" \
+  -H "Access-Control-Request-Method: GET"
+# Expected: 204
+
+
+## STEP 4 — Verify the public Mac URL is still reachable
+
+curl -sI https://opencode-mac.madebysoupy.dev/site.webmanifest | head -5
+# Expected: HTTP/2 200
+
+
+## STEP 5 — Report back in this file
+
+# Append results in this format:
+# DONE 2026-05-29: Mac plist reinstalled with opencode-windows CORS origin.
+# Step 2 — reinstall + reload: OK; health -> {"healthy":true,...}
+# Step 3 — CORS from opencode.madebysoupy.dev: 204; from opencode-windows.*: 204
+# Step 4 — opencode-mac.madebysoupy.dev/site.webmanifest -> HTTP 200
 #
 # Context:
 # - opencode.madebysoupy.dev is now routed by site-auth Worker with instance selection:
