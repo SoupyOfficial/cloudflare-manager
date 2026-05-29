@@ -1,7 +1,8 @@
 # OpenCode on Mac Mini
 # Tunnel: ollama-home (7ee20289-1222-4023-89af-d3b688005abb)
-# Public hostname: mac.opencode.madebysoupy.dev
-# Auth: Cloudflare Access (email policy)
+# Public hostname: opencode-mac.madebysoupy.dev
+# Legacy alias: mac.opencode.madebysoupy.dev
+# Auth: None (Cloudflare Access is incompatible with cross-origin fetch from opencode.madebysoupy.dev)
 #
 # Mac OpenCode shares the ollama-home tunnel with llm.madebysoupy.dev.
 # There is NO separate opencode-origin tunnel on Mac.
@@ -14,6 +15,8 @@
 #   ingress:
 #     - hostname: llm.madebysoupy.dev
 #       service: http://localhost:11434
+#     - hostname: opencode-mac.madebysoupy.dev
+#       service: http://localhost:4096
 #     - hostname: mac.opencode.madebysoupy.dev
 #       service: http://localhost:4096
 #     - service: http_status:404
@@ -21,7 +24,8 @@
 # Then reload: launchctl unload ~/Library/LaunchAgents/com.cloudflare.tunnel.opencode.plist
 #              launchctl load   ~/Library/LaunchAgents/com.cloudflare.tunnel.opencode.plist
 #
-# DNS: mac.opencode.madebysoupy.dev → 7ee20289-1222-4023-89af-d3b688005abb.cfargotunnel.com (proxied)
+# DNS: opencode-mac.madebysoupy.dev → 7ee20289-1222-4023-89af-d3b688005abb.cfargotunnel.com (proxied)
+# DNS: mac.opencode.madebysoupy.dev (legacy alias) → 7ee20289-1222-4023-89af-d3b688005abb.cfargotunnel.com (proxied)
 # Auth: None (Cloudflare Access incompatible with cross-origin fetch from opencode.madebysoupy.dev)
 #       Set OPENCODE_SERVER_PASSWORD on Mac if you want basic-auth protection.
 # CORS: opencode launched with --cors https://opencode.madebysoupy.dev (set in opencode-manager plist)

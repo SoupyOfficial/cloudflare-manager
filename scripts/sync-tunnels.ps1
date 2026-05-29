@@ -29,9 +29,14 @@ foreach ($file in $tunnelFiles) {
     Write-Host "`nProcessing: $($file.Name)" -ForegroundColor White
 
     $content = Get-Content $file.FullName -Raw
+    if ($content -notmatch '(?m)^tunnel:\s*$') {
+        Write-Host "  Skipping — no top-level tunnel block found" -ForegroundColor DarkGray
+        continue
+    }
+
     # Simple YAML parsing for tunnel config
-    $tunnelName = if ($content -match 'name:\s*(.+)') { $matches[1].Trim() } else { '''' }
-    $tunnelId   = if ($content -match 'id:\s*"?([0-9a-f-]{36})"?') { $matches[1].Trim() } else { '''' }
+    $tunnelName = if ($content -match '(?m)^\s*name:\s*(.+)$') { $matches[1].Trim() } else { '''' }
+    $tunnelId   = if ($content -match '(?m)^\s*id:\s*"?([0-9a-f-]{36})"?\s*$') { $matches[1].Trim() } else { '''' }
 
     if (-not $tunnelName) {
         Write-Host "  Skipping — no tunnel name found" -ForegroundColor Yellow
@@ -110,7 +115,12 @@ foreach ($file in $tunnelFiles) {
     Write-Host "  Ingress: $ruleCount hostname rules" -ForegroundColor DarkGray
 
     # Build cloudflared config YAML
-    $configDir  = "$env:USERPROFILE\.cloudflared"
+    # Use USERPROFILE on Windows and HOME on macOS/Linux.
+    $homeDir = if ($env:USERPROFILE) { $env:USERPROFILE } elseif ($env:HOME) { $env:HOME } else { '' }
+    if (-not $homeDir) {
+        throw "Could not determine home directory. Set USERPROFILE or HOME."
+    }
+    $configDir  = Join-Path $homeDir '.cloudflared'
     $credsFile  = Join-Path $configDir "$tunnelId.json"
     $configFile = Join-Path $configDir "$tunnelName-config.yml"
 

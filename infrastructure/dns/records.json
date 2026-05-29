@@ -39,11 +39,18 @@
       "comment": "Direct WebSocket tunnel endpoint for OpenCode — used by site-auth Worker for WS upgrades"
     },
     {
+      "name": "opencode-mac",
+      "type": "CNAME",
+      "content": "7ee20289-1222-4023-89af-d3b688005abb.cfargotunnel.com",
+      "proxied": true,
+      "comment": "OpenCode IDE on Mac Mini (preferred hostname) — served by ollama-home tunnel. No Access policy (cross-origin fetch incompatible with Access cookies)."
+    },
+    {
       "name": "mac.opencode",
       "type": "CNAME",
       "content": "7ee20289-1222-4023-89af-d3b688005abb.cfargotunnel.com",
       "proxied": true,
-      "comment": "OpenCode IDE on Mac Mini — served by ollama-home tunnel. No Access policy (cross-origin fetch incompatible with Access cookies)."
+      "comment": "OpenCode IDE on Mac Mini (legacy alias) — served by ollama-home tunnel. No Access policy (cross-origin fetch incompatible with Access cookies)."
     },
     {
       "name": "llm",

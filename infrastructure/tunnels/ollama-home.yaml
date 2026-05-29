@@ -20,6 +20,16 @@ ingress:
       httpHostHeader: localhost:11434
     access_policy: cloudflare-access
 
+  - hostname: opencode-mac.madebysoupy.dev
+    service: http://localhost:4096
+    machine: mac-mini
+    origin_request:
+      connectTimeout: 30s
+      tlsTimeout: 30s
+      tcpKeepAlive: 30s
+      keepAliveTimeout: 90s
+      httpHostHeader: localhost:4096
+
   - hostname: mac.opencode.madebysoupy.dev
     service: http://localhost:4096
     machine: mac-mini
@@ -33,7 +43,7 @@ ingress:
   - service: http_status:404
 
 notes:
-  - "Mac Mini only — runs both Ollama (llm.) and OpenCode (mac.opencode.)"
+  - "Mac Mini only — runs both Ollama (llm.) and OpenCode (opencode-mac. + mac.opencode. alias)"
   - "OpenCode on Windows uses a separate tunnel (475f52fb) for opencode.madebysoupy.dev"
-  - "mac.opencode. CORS: opencode service launches with --cors https://opencode.madebysoupy.dev (see opencode-manager)"
-  - "mac.opencode.madebysoupy.dev is active via the ollama-home tunnel and local cloudflared config"
+  - "opencode-mac. CORS: opencode service launches with --cors https://opencode.madebysoupy.dev (see opencode-manager)"
+  - "opencode-mac.madebysoupy.dev is active via the ollama-home tunnel and local cloudflared config"
