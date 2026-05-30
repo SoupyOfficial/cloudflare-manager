@@ -124,7 +124,7 @@ export default {
       timingSafeEqual(credentials.username, expectedUser) &&
       timingSafeEqual(credentials.password, expectedPass)
     const hasValidSession = await isSessionAllowed(request, expectedUser, expectedPass)
-    const isAllowed = isBasicAllowed || hasValidSession
+    const isAllowed = env.AUTH_DISABLED === 'true' || isBasicAllowed || hasValidSession
 
     if (!isAllowed) {
       if (isAnyOpencodeHost && isOpencodePublicAssetRequest(request, incomingUrl)) {

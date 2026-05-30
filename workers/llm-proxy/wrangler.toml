@@ -8,6 +8,11 @@ workers_dev = true
 [vars]
 ALLOWED_ORIGINS = "https://apps.madebysoupy.dev,https://plot-generator.madebysoupy.dev"
 
+# ─── Production Route ────────────────────────────────────────────────────────
+[[routes]]
+pattern = "llm-api.madebysoupy.dev/*"
+zone_name = "madebysoupy.dev"
+
 # ─── Secrets (set via `wrangler secret put`, do NOT commit values) ────────────
 # LLM_HOST_CLIENT_ID
 # LLM_HOST_CLIENT_SECRET
