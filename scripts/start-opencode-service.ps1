@@ -59,6 +59,20 @@ export PATH="/mnt/c/Python311:/mnt/c/Python311/Scripts:\$PATH"
 $(if ($serverPassword) { "export OPENCODE_SERVER_PASSWORD='$serverPassword'" })
 $(if ($serverUsername -and $serverUsername -ne 'opencode') { "export OPENCODE_SERVER_USERNAME='$serverUsername'" })
 
+# ── Sync config from Windows to WSL ──────────────────────────────────────
+# opencode-manager deploys config to the Windows path (C:\Users\JSCam\.config\opencode\).
+# Sync it into WSL so opencode reads the latest config on every restart.
+WIN_CONFIG="/mnt/c/Users/JSCam/.config/opencode"
+WSL_CONFIG="\$HOME/.config/opencode"
+if [ -f "\$WIN_CONFIG/opencode.jsonc" ]; then
+  mkdir -p "\$WSL_CONFIG/agents" "\$WSL_CONFIG/commands" "\$WSL_CONFIG/plugins"
+  cp -f "\$WIN_CONFIG/opencode.jsonc" "\$WSL_CONFIG/opencode.jsonc"
+  cp -f "\$WIN_CONFIG/AGENTS.md" "\$WSL_CONFIG/AGENTS.md" 2>/dev/null
+  cp -f "\$WIN_CONFIG/agents/"*.md "\$WSL_CONFIG/agents/" 2>/dev/null
+  cp -f "\$WIN_CONFIG/commands/"*.md "\$WSL_CONFIG/commands/" 2>/dev/null
+  cp -f "\$WIN_CONFIG/plugins/"*.ts "\$WSL_CONFIG/plugins/" 2>/dev/null
+fi
+
 # Port/hostname/cors are set via ~/.config/opencode/opencode.jsonc (server block).
 # Do not duplicate them here — the config file is the single source of truth.
 exec opencode web
