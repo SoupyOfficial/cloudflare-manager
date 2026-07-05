@@ -142,24 +142,12 @@ export default {
         )
       }
 
-      // Top-level document requests to apps/opencode are redirected to plots.*
-      // before any content loads. Non-document requests return 401 so assets
-      // do not cross-origin redirect to the login host (which causes CSP noise).
+      // All hosts now show Basic auth prompt directly (no login-portal redirect).
       if (isAppsHost || isAnyOpencodeHost) {
-        if (isDocumentNavigationRequest(request)) {
-          const loginUrl = buildLoginRedirectUrl(env.LOGIN_URL || DEFAULT_LOGIN_URL, incomingUrl)
-          return new Response(null, {
-            status: 302,
-            headers: {
-              Location: loginUrl,
-              'Cache-Control': 'no-store',
-            },
-          })
-        }
-
         return new Response('Authentication required', {
           status: 401,
           headers: {
+            'WWW-Authenticate': `Basic realm="${REALM}", charset="UTF-8"`,
             'Cache-Control': 'no-store',
           },
         })
@@ -179,26 +167,17 @@ export default {
       return new Response('Unauthorized', { status: 401 })
     }
 
+    // plots.* is no longer a login portal -- serve content directly.
+    // Just set session cookie if present via basic auth, then fall through to proxy.
     if (isPlotsHost) {
-      const returnTo = incomingUrl.searchParams.get('return_to')
-      const redirectTarget = isSafeReturnTo(returnTo, APPS_HOST, OPENCODE_HOST)
-        ? returnTo
-        : buildAppsRedirectUrl(incomingUrl, APPS_HOST)
-      const redirectHeaders = new Headers({
-        Location: redirectTarget,
-        'Cache-Control': 'no-store',
-      })
       if (isBasicAllowed) {
-        redirectHeaders.append(
-          'Set-Cookie',
-          await buildSessionCookie(expectedUser, expectedPass),
-        )
+        const cookieHeaders = new Headers()
+        cookieHeaders.append('Set-Cookie', await buildSessionCookie(expectedUser, expectedPass))
+        return new Response(null, {
+          status: 204,
+          headers: cookieHeaders,
+        })
       }
-
-      return new Response(null, {
-        status: 302,
-        headers: redirectHeaders,
-      })
     }
 
     // Redirect the shared opencode.* URL to the appropriate fixed per-machine URL.

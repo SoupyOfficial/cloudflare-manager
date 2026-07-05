@@ -41,7 +41,7 @@ zone_name = "madebysoupy.dev"
 
 [vars]
 OPENCODE_DEFAULT_INSTANCE = "windows"
-AUTH_DISABLED = "true"
+AUTH_DISABLED = "false"
 
 # ─── Test Environment ─────────────────────────────────────────────────────────
 [env.test]
